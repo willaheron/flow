@@ -1,0 +1,2098 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<title>Flow</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Flow">
+<meta name="theme-color" content="#eef0f3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#09090b" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<style>
+:root{
+  color-scheme: light dark;
+
+  /* light */
+  --bg:#eef0f3;
+  --bg-2:#e2e6ec;
+  --bg-3:#f6f7f9;
+  --glass:rgba(255,255,255,.62);
+  --glass-2:rgba(255,255,255,.40);
+  --glass-3:rgba(255,255,255,.80);
+  --sheen:rgba(255,255,255,.70);
+  --stroke:rgba(17,20,24,.09);
+  --stroke-2:rgba(17,20,24,.055);
+  --text:#101317;
+  --dim:#555c65;
+  --faint:#8b929b;
+  --accent:#26596f;
+  --accent-ink:#ffffff;
+  --accent-wash:rgba(38,89,111,.085);
+  --danger:#9a3a31;
+  --shadow:0 0.5px 1px rgba(17,20,24,.05), 0 6px 16px -4px rgba(17,20,24,.08), 0 18px 40px -12px rgba(17,20,24,.10);
+  --shadow-lift:0 0.5px 1px rgba(17,20,24,.06), 0 10px 24px -6px rgba(17,20,24,.13), 0 28px 60px -16px rgba(17,20,24,.16);
+
+  --r-xl:26px; --r-lg:18px; --r-md:12px; --r-sm:8px;
+  --pad:17px;
+  --top:env(safe-area-inset-top,0px);
+  --bot:env(safe-area-inset-bottom,0px);
+  --hair:0.5px;
+  --rim-hi:rgba(255,255,255,.92);
+  --rim-mid:rgba(255,255,255,.52);
+  --rim-lo:rgba(255,255,255,.22);
+  --lens:inset 0 1px 0 rgba(255,255,255,.55), inset 0 -1px 0 rgba(255,255,255,.16);
+}
+:root[data-theme="dark"]{
+  --bg:#09090b;
+  --bg-2:#141619;
+  --bg-3:#141518;
+  --glass:rgba(30,32,36,.62);
+  --glass-2:rgba(52,55,61,.42);
+  --glass-3:rgba(38,40,45,.86);
+  --sheen:rgba(255,255,255,.07);
+  --stroke:rgba(255,255,255,.095);
+  --stroke-2:rgba(255,255,255,.055);
+  --text:#f3f4f6;
+  --dim:#a6abb3;
+  --faint:#6f757e;
+  --accent:#8cbcd9;
+  --accent-ink:#0a0b0d;
+  --accent-wash:rgba(140,188,217,.13);
+  --danger:#dd8279;
+  --shadow:0 0.5px 1px rgba(0,0,0,.5), 0 8px 20px -6px rgba(0,0,0,.5), 0 20px 48px -14px rgba(0,0,0,.6);
+  --shadow-lift:0 0.5px 1px rgba(0,0,0,.6), 0 12px 28px -6px rgba(0,0,0,.62), 0 32px 70px -18px rgba(0,0,0,.7);
+  --rim-hi:rgba(255,255,255,.60);
+  --rim-mid:rgba(255,255,255,.26);
+  --rim-lo:rgba(255,255,255,.09);
+  --lens:inset 0 1px 0 rgba(255,255,255,.17), inset 0 -1px 0 rgba(255,255,255,.05);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#09090b;
+    --bg-2:#141619;
+    --bg-3:#141518;
+    --glass:rgba(30,32,36,.62);
+    --glass-2:rgba(52,55,61,.42);
+    --glass-3:rgba(38,40,45,.86);
+    --sheen:rgba(255,255,255,.07);
+    --stroke:rgba(255,255,255,.095);
+    --stroke-2:rgba(255,255,255,.055);
+    --text:#f3f4f6;
+    --dim:#a6abb3;
+    --faint:#6f757e;
+    --accent:#8cbcd9;
+    --accent-ink:#0a0b0d;
+    --accent-wash:rgba(140,188,217,.13);
+    --danger:#dd8279;
+    --shadow:0 0.5px 1px rgba(0,0,0,.5), 0 8px 20px -6px rgba(0,0,0,.5), 0 20px 48px -14px rgba(0,0,0,.6);
+    --shadow-lift:0 0.5px 1px rgba(0,0,0,.6), 0 12px 28px -6px rgba(0,0,0,.62), 0 32px 70px -18px rgba(0,0,0,.7);
+    --rim-hi:rgba(255,255,255,.60);
+    --rim-mid:rgba(255,255,255,.26);
+    --rim-lo:rgba(255,255,255,.09);
+    --lens:inset 0 1px 0 rgba(255,255,255,.17), inset 0 -1px 0 rgba(255,255,255,.05);
+  }
+}
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Helvetica Neue",Helvetica,Arial,sans-serif;
+  font-size:16px; line-height:1.45;
+  letter-spacing:-.011em;
+  color:var(--text);
+  background:var(--bg);
+  background-image:
+    radial-gradient(130% 62% at 8% -8%, var(--bg-2) 0%, transparent 62%),
+    radial-gradient(100% 48% at 100% 2%, var(--bg-3) 0%, transparent 58%);
+  background-attachment:fixed;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  overscroll-behavior-y:none;
+  text-rendering:optimizeLegibility;
+}
+button,input,textarea,select{font:inherit;color:inherit;letter-spacing:inherit}
+button{background:none;border:0;padding:0;cursor:pointer}
+
+/* ---------- liquid glass primitive ----------
+   Three layers make the material read as glass rather than frosted plastic:
+   a heavy blur that lifts saturation and brightness, a specular ring around
+   the edge where light catches, and inner highlights top and bottom that
+   give the panel a sense of thickness. */
+.card, nav, #top, .sheet, .dash, .tg-card, #toast, .iconbtn, .remind, .banner, .seg{
+  -webkit-backdrop-filter:blur(40px) saturate(200%) brightness(1.06);
+  backdrop-filter:blur(40px) saturate(200%) brightness(1.06);
+}
+:root[data-theme="dark"] .card, :root[data-theme="dark"] nav, :root[data-theme="dark"] #top,
+:root[data-theme="dark"] .sheet, :root[data-theme="dark"] .dash, :root[data-theme="dark"] .tg-card,
+:root[data-theme="dark"] #toast, :root[data-theme="dark"] .iconbtn, :root[data-theme="dark"] .remind,
+:root[data-theme="dark"] .banner, :root[data-theme="dark"] .seg{
+  -webkit-backdrop-filter:blur(40px) saturate(200%) brightness(1.5);
+  backdrop-filter:blur(40px) saturate(200%) brightness(1.5);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]) .card, :root:not([data-theme="light"]) nav,
+  :root:not([data-theme="light"]) #top, :root:not([data-theme="light"]) .sheet,
+  :root:not([data-theme="light"]) .dash, :root:not([data-theme="light"]) .tg-card,
+  :root:not([data-theme="light"]) #toast, :root:not([data-theme="light"]) .iconbtn,
+  :root:not([data-theme="light"]) .remind, :root:not([data-theme="light"]) .banner,
+  :root:not([data-theme="light"]) .seg{
+    -webkit-backdrop-filter:blur(40px) saturate(200%) brightness(1.5);
+    backdrop-filter:blur(40px) saturate(200%) brightness(1.5);
+  }
+}
+
+/* specular ring: a gradient hairline, bright where light would land */
+.card, nav, .sheet, .dash, .tg-card, #toast, .iconbtn, .remind, .banner, .seg, .btn, .pick, .tick{
+  position:relative;
+}
+.card::after, nav::after, .dash::after, .tg-card::after, #toast::after,
+.iconbtn::after, .remind::after, .banner::after, .seg::after, .btn::after{
+  content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;
+  background:linear-gradient(142deg,
+    var(--rim-hi) 0%,
+    var(--rim-lo) 34%,
+    transparent 52%,
+    var(--rim-lo) 72%,
+    var(--rim-mid) 100%);
+  -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;
+  mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite:exclude;
+  pointer-events:none;
+}
+.sheet::after{
+  content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;
+  background:linear-gradient(176deg, var(--rim-hi) 0%, transparent 28%);
+  -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;
+  mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite:exclude;
+  pointer-events:none;
+}
+.card > *, nav > *, .dash > *, .tg-card > *, .banner > *, .remind > *, .seg > *{position:relative;z-index:1}
+
+/* ---------- chrome ---------- */
+#top{
+  position:fixed; inset:0 0 auto 0; z-index:40;
+  padding:calc(var(--top) + 11px) var(--pad) 11px;
+  background:var(--glass);
+  border-bottom:var(--hair) solid var(--stroke);
+  box-shadow:var(--lens);
+  display:flex; align-items:flex-end; justify-content:space-between; gap:12px;
+}
+#top h1{
+  margin:0;font-size:27px;line-height:1.1;font-weight:680;
+  letter-spacing:-.032em;
+}
+#top .sub{font-size:12.5px;color:var(--faint);margin-top:3px;letter-spacing:-.005em}
+#topAct{display:flex;gap:7px;align-items:center;padding-bottom:2px}
+.iconbtn{
+  width:33px;height:33px;border-radius:11px;
+  display:grid;place-items:center;color:var(--dim);
+  background:var(--glass-2);
+  border:var(--hair) solid var(--stroke);
+  box-shadow:var(--lens);
+  transition:transform .14s ease, background .14s ease;
+}
+.iconbtn:active{transform:scale(.9)}
+.iconbtn svg{width:17px;height:17px}
+
+main{
+  position:absolute; inset:0;
+  overflow-y:auto; -webkit-overflow-scrolling:touch;
+  padding:calc(var(--top) + 76px) var(--pad) calc(var(--bot) + 108px);
+}
+
+nav{
+  position:fixed; left:50%; transform:translateX(-50%);
+  bottom:calc(var(--bot) + 11px); z-index:40;
+  display:flex; gap:1px; padding:5px;
+  border-radius:21px;
+  background:var(--glass);
+  border:var(--hair) solid var(--stroke);
+  box-shadow:var(--shadow-lift), var(--lens);
+}
+nav button{
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:7px 10px 6px; border-radius:15px;
+  color:var(--faint); font-size:10px; font-weight:550; letter-spacing:.004em;
+  transition:color .16s ease, background .16s ease;
+}
+nav button[aria-current="true"]{
+  color:var(--accent);
+  background:var(--accent-wash);
+  box-shadow:var(--lens);
+}
+nav svg{width:20px;height:20px;stroke-width:1.5}
+nav .wrap{position:relative}
+nav .pip{
+  position:absolute;top:1px;right:1px;min-width:15px;height:15px;padding:0 4px;
+  border-radius:8px;background:var(--accent);color:var(--accent-ink);
+  font-size:9.5px;font-weight:680;line-height:15px;text-align:center;
+  letter-spacing:-.01em;
+  box-shadow:0 1px 4px rgba(0,0,0,.2);
+}
+
+/* ---------- blocks ---------- */
+.card{
+  background:var(--glass);
+  border:var(--hair) solid var(--stroke);
+  border-radius:var(--r-lg);
+  box-shadow:var(--shadow), var(--lens);
+  padding:13px var(--pad);
+  margin-bottom:11px;
+}
+.card.tight{padding:3px var(--pad)}
+.sectitle{
+  font-size:10.5px; color:var(--faint); font-weight:640;
+  letter-spacing:.075em; text-transform:uppercase;
+  margin:24px 3px 8px;
+}
+.sectitle:first-child{margin-top:2px}
+.sectitle span{text-transform:none;letter-spacing:-.005em;font-size:11px}
+.lead{font-size:13.5px;color:var(--dim);margin:0 0 12px;padding:0 3px;line-height:1.5}
+
+.row{
+  display:flex;align-items:flex-start;gap:12px;
+  padding:12px 0; border-top:var(--hair) solid var(--stroke-2);
+}
+.row:first-child{border-top:0}
+.row .body{flex:1;min-width:0}
+.row .t{font-size:15.5px;line-height:1.36;letter-spacing:-.014em;word-wrap:break-word;overflow-wrap:anywhere}
+.row .m{font-size:11.5px;color:var(--faint);margin-top:4px;letter-spacing:-.002em}
+.row.done .t{color:var(--faint);text-decoration:line-through;text-decoration-color:var(--stroke)}
+.chev{color:var(--faint);flex:none;margin-top:3px;opacity:.5}
+.chev svg{width:15px;height:15px;stroke-width:2}
+
+.tick{
+  flex:none;width:22px;height:22px;margin-top:1px;border-radius:50%;
+  border:1.5px solid var(--stroke); display:grid;place-items:center;
+  color:transparent;background:var(--glass-2);
+  transition:border-color .14s, background .14s, color .14s, transform .14s;
+}
+.tick.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.tick:active{transform:scale(.88)}
+.tick svg{width:12px;height:12px}
+
+.pill{
+  display:inline-block;padding:2px 8px;border-radius:7px;
+  background:var(--accent-wash);color:var(--accent);
+  font-size:10.5px;font-weight:650;letter-spacing:.02em;text-transform:uppercase;
+}
+.pill.grey{background:var(--glass-2);color:var(--faint)}
+
+.empty{padding:17px 3px;color:var(--faint);font-size:13.5px}
+
+.pick{
+  flex:none;align-self:center;
+  -webkit-appearance:none;appearance:none;
+  padding:7px 25px 7px 11px;border-radius:9px;
+  background:var(--accent-wash);
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='9' height='9' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>");
+  background-repeat:no-repeat;background-position:right 9px center;
+  border:var(--hair) solid var(--stroke-2);
+  font-size:12.5px;font-weight:620;color:var(--accent);letter-spacing:-.005em;
+  max-width:106px;
+}
+.pick:active{opacity:.6}
+
+.row.grp{border-top-color:transparent;padding-left:12px;position:relative}
+.row.grp::before{
+  content:"";position:absolute;left:0;top:0;bottom:0;width:2px;
+  background:var(--accent);opacity:.3;border-radius:1px;
+}
+.row.grp-top{border-top:var(--hair) solid var(--stroke);margin-top:6px}
+
+.seg{
+  display:flex;gap:2px;padding:3px;margin:0 0 14px;
+  background:var(--glass-2);
+  border:var(--hair) solid var(--stroke-2);
+  border-radius:13px;
+  box-shadow:var(--lens);
+}
+.seg button{
+  flex:1;padding:7px 4px;border-radius:10px;
+  font-size:13px;font-weight:570;color:var(--dim);letter-spacing:-.012em;
+  transition:background .16s ease, color .16s ease;
+}
+.seg button[aria-pressed="true"]{
+  background:var(--glass-3);color:var(--text);
+  box-shadow:0 2px 6px -1px rgba(0,0,0,.10), var(--lens);
+}
+
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  padding:12px 16px;border-radius:var(--r-md);
+  background:var(--glass-2);
+  border:var(--hair) solid var(--stroke);
+  box-shadow:var(--lens);
+  font-size:14.5px;font-weight:580;color:var(--text);letter-spacing:-.014em;
+  transition:transform .14s ease, opacity .14s ease;
+}
+.btn:active{transform:scale(.978);opacity:.9}
+.btn.primary{background:var(--accent);border-color:transparent;color:var(--accent-ink);box-shadow:0 2px 10px -2px var(--accent-wash)}
+.btn.quiet{background:none;border-color:var(--stroke-2);color:var(--dim);box-shadow:none}
+.btn.warn{color:var(--danger)}
+.btn.full{width:100%}
+.btn svg{width:16px;height:16px}
+.btnrow{display:flex;gap:8px;margin-bottom:12px}
+.btnrow .btn{flex:1}
+
+.field{
+  width:100%;padding:12px 14px;border-radius:var(--r-md);
+  background:var(--glass-2);
+  border:var(--hair) solid var(--stroke);
+  font-size:16px;color:var(--text);outline:none;resize:none;
+  font-family:inherit;letter-spacing:-.011em;
+  transition:border-color .16s ease;
+}
+.field:focus{border-color:var(--accent)}
+.field::placeholder{color:var(--faint)}
+
+.remind{
+  display:flex;align-items:center;gap:9px;width:100%;
+  padding:9px 13px;margin-bottom:11px;
+  border-radius:12px;
+  background:var(--accent-wash);
+  border:var(--hair) solid var(--stroke-2);
+  box-shadow:var(--lens);
+  text-align:left;
+}
+.remind .rt{flex:1;font-size:12.5px;font-weight:620;color:var(--accent);letter-spacing:-.006em}
+.remind svg{color:var(--accent);flex:none;width:15px;height:15px}
+.remind:active{opacity:.6}
+
+.dash{
+  display:flex;align-items:stretch;
+  margin-bottom:11px;
+  border-radius:var(--r-lg);
+  background:var(--glass);
+  border:var(--hair) solid var(--stroke);
+  box-shadow:var(--shadow), var(--lens);
+  overflow:hidden;
+}
+.dcell{
+  flex:1 1 0;min-width:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  padding:14px 4px 12px;
+  border-left:var(--hair) solid var(--stroke-2);
+  transition:background .16s ease;
+}
+.dcell:first-child{border-left:0}
+.dcell .dn{
+  font-size:23px;font-weight:660;letter-spacing:-.035em;line-height:1;
+  font-variant-numeric:tabular-nums;color:var(--text);
+}
+.dcell .dl{
+  font-size:9.5px;color:var(--faint);letter-spacing:.055em;text-transform:uppercase;font-weight:580;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;
+}
+.dcell.live .dn{color:var(--accent)}
+.dcell.live{background:var(--accent-wash)}
+button.dcell:active{opacity:.55}
+
+.banner{
+  display:flex;align-items:center;gap:12px;width:100%;
+  padding:13px var(--pad);margin-bottom:11px;
+  border-radius:var(--r-lg);
+  background:var(--accent-wash);
+  border:var(--hair) solid var(--stroke-2);
+  box-shadow:var(--lens);
+  text-align:left;
+}
+.banner .bt{flex:1;font-size:14px;font-weight:600;color:var(--accent);letter-spacing:-.014em}
+.banner svg{color:var(--accent);flex:none}
+
+details.fold{border-top:var(--hair) solid var(--stroke-2)}
+details.fold:first-of-type{border-top:0}
+details.fold > summary{
+  list-style:none;cursor:pointer;
+  padding:13px 0;display:flex;align-items:center;gap:10px;
+  font-size:15px;font-weight:570;letter-spacing:-.014em;
+}
+details.fold > summary::-webkit-details-marker{display:none}
+details.fold > summary .caret{transition:transform .2s cubic-bezier(.32,.72,0,1);color:var(--faint);flex:none;opacity:.6}
+details.fold[open] > summary .caret{transform:rotate(90deg)}
+details.fold > summary .cnt{margin-left:auto;font-size:11.5px;color:var(--faint);font-weight:500}
+.foldbody{padding:0 0 11px}
+
+.slot{
+  display:flex;align-items:center;gap:12px;
+  padding:13px 0;border-top:var(--hair) solid var(--stroke-2);width:100%;text-align:left;
+}
+.slot:first-child{border-top:0}
+.slot .n{
+  flex:none;width:22px;height:22px;border-radius:7px;
+  background:var(--glass-2);
+  border:var(--hair) solid var(--stroke-2);
+  display:grid;place-items:center;font-size:11px;color:var(--faint);font-weight:640;
+}
+.slot .n svg{width:13px;height:13px}
+.slot .v{flex:1;font-size:15.5px;letter-spacing:-.014em;background:none;border:0;font-family:inherit;min-width:0}
+.slot .v.ph{color:var(--faint)}
+.slot.extra .n{background:none;border-style:dashed;color:var(--faint)}
+.slot.struck .v{color:var(--faint);text-decoration:line-through;text-decoration-color:var(--stroke)}
+
+/* ---------- overlays ---------- */
+.scrim{
+  position:fixed;inset:0;z-index:60;
+  background:rgba(8,9,11,.42);
+  -webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);
+  opacity:0;pointer-events:none;transition:opacity .24s ease;
+}
+.scrim.on{opacity:1;pointer-events:auto}
+
+.sheet{
+  position:fixed;left:0;right:0;bottom:0;z-index:61;
+  max-height:88vh;overflow-y:auto;
+  padding:9px var(--pad) calc(var(--bot) + 22px);
+  border-radius:var(--r-xl) var(--r-xl) 0 0;
+  background:var(--glass);
+  -webkit-backdrop-filter:blur(36px) saturate(190%);
+  backdrop-filter:blur(36px) saturate(190%);
+  border-top:var(--hair) solid var(--stroke);
+  box-shadow:var(--lens), 0 -24px 70px rgba(0,0,0,.22);
+  transform:translateY(102%);
+  transition:transform .34s cubic-bezier(.32,.72,0,1);
+}
+.sheet.on{transform:none}
+.grab{width:34px;height:4px;border-radius:2px;background:var(--faint);opacity:.35;margin:0 auto 15px}
+.sheet h2{margin:0 0 5px;font-size:20px;font-weight:660;letter-spacing:-.028em}
+.sheet .sh-sub{font-size:13px;color:var(--faint);margin:0 0 15px;line-height:1.45;word-wrap:break-word;overflow-wrap:anywhere}
+.optrow{
+  display:flex;align-items:center;gap:12px;width:100%;
+  padding:13px 3px;border-top:var(--hair) solid var(--stroke-2);
+  font-size:15px;letter-spacing:-.014em;text-align:left;
+}
+.optrow:first-of-type{border-top:0}
+.optrow svg{width:18px;height:18px;color:var(--faint);flex:none}
+.optrow:active{opacity:.55}
+.optrow.sel{color:var(--accent)} .optrow.sel svg{color:var(--accent)}
+.optrow.warn{color:var(--danger)} .optrow.warn svg{color:var(--danger)}
+.optrow .r{margin-left:auto;color:var(--faint);font-size:13px;font-variant-numeric:tabular-nums}
+
+#triage{
+  position:fixed;inset:0;z-index:70;
+  display:none;flex-direction:column;
+  padding:calc(var(--top) + 13px) var(--pad) calc(var(--bot) + 15px);
+  background:var(--bg);
+  background-image:
+    radial-gradient(130% 62% at 8% -8%, var(--bg-2) 0%, transparent 62%),
+    radial-gradient(100% 48% at 100% 2%, var(--bg-3) 0%, transparent 58%);
+}
+#triage.on{display:flex}
+.tg-head{display:flex;align-items:center;gap:13px;margin-bottom:16px}
+.tg-bar{flex:1;height:3px;border-radius:2px;background:var(--stroke);overflow:hidden}
+.tg-bar i{display:block;height:100%;background:var(--accent);border-radius:2px;transition:width .26s cubic-bezier(.32,.72,0,1)}
+.tg-count{font-size:12px;color:var(--faint);font-variant-numeric:tabular-nums;letter-spacing:-.005em}
+.tg-stage{flex:1;display:flex;align-items:center;justify-content:center;min-height:0}
+.tg-card{
+  width:100%;padding:28px 23px;border-radius:var(--r-xl);
+  background:var(--glass);
+  border:var(--hair) solid var(--stroke);
+  box-shadow:var(--shadow-lift), var(--lens);
+  max-height:100%;overflow-y:auto;
+}
+.tg-card .meta{display:flex;gap:7px;margin-bottom:14px;flex-wrap:wrap}
+.tg-card .txt{font-size:22px;line-height:1.28;letter-spacing:-.028em;font-weight:520;word-wrap:break-word;overflow-wrap:anywhere}
+.tg-ask{font-size:12.5px;color:var(--faint);text-align:center;margin:18px 0 11px;letter-spacing:-.005em}
+.tg-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tg-grid .btn{padding:15px 10px}
+.tg-grid .wide{grid-column:1/-1}
+.tg-done{text-align:center;padding:42px 12px}
+.tg-done h2{font-size:23px;margin:0 0 9px;letter-spacing:-.03em;font-weight:660}
+.tg-done p{color:var(--dim);font-size:14px;margin:0 0 22px;line-height:1.5}
+
+#toast{
+  position:fixed;left:50%;transform:translateX(-50%) translateY(12px);
+  bottom:calc(var(--bot) + 88px);z-index:80;
+  padding:10px 18px;border-radius:12px;
+  background:var(--glass-3);
+  border:var(--hair) solid var(--stroke);
+  box-shadow:var(--shadow-lift), var(--lens);
+  font-size:13px;font-weight:560;letter-spacing:-.01em;
+  opacity:0;pointer-events:none;
+  transition:opacity .22s ease, transform .22s cubic-bezier(.32,.72,0,1);
+}
+#toast.on{opacity:1;transform:translateX(-50%)}
+
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))){
+  .card, nav, #top, .sheet, .dash, .tg-card, #toast{background:var(--glass-3)}
+}
+</style>
+</head>
+<body>
+
+<header id="top">
+  <div>
+    <h1 id="topTitle">Today</h1>
+    <div class="sub" id="topSub"></div>
+  </div>
+  <div id="topAct"></div>
+</header>
+
+<main id="view"></main>
+
+<nav id="tabs"></nav>
+
+<div class="scrim" id="scrim"></div>
+<section class="sheet" id="sheet" role="dialog" aria-modal="true"></section>
+<section id="triage"></section>
+<div id="toast"></div>
+
+<script>
+"use strict";
+
+/* ============================ icons ============================ */
+const I = {
+  today:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="3.5"/><path d="M3.5 9.5h17M8 3.2v3.4M16 3.2v3.4"/><circle cx="12" cy="14.8" r="1.9" fill="currentColor" stroke="none"/></svg>',
+  flow:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg>',
+  meet:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M16 19a4 4 0 0 0-8 0"/><circle cx="12" cy="10" r="3"/><path d="M5.5 17.5A8 8 0 1 1 18.5 17.5"/></svg>',
+  set:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>',
+  check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+  chev:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>',
+  caret:'<svg class="caret" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>',
+  plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  x:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>',
+  inboxTab:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h5l2 3h4l2-3h5"/><path d="M4.8 5.6 3 12v6a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-6l-1.8-6.4A1 1 0 0 0 18.2 5H5.8a1 1 0 0 0-1 .6z"/></svg>',
+  inbox:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h5l2 3h4l2-3h5"/><path d="M4.8 5.6 3 12v6a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-6l-1.8-6.4A1 1 0 0 0 18.2 5H5.8a1 1 0 0 0-1 .6z"/></svg>',
+  edit:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
+  trash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>',
+  arrow:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
+  dot:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8"/></svg>',
+  dotOn:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4" fill="currentColor" stroke="none"/></svg>',
+  down:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13M6 11l6 6 6-6M4 21h16"/></svg>',
+  up:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V8M6 13l6-6 6 6M4 3h16"/></svg>',
+  mail:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>',
+  lock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>',
+  bulb:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.4.3.5.7.5 1.1v1h6v-1c0-.4.1-.8.5-1.1A6 6 0 0 0 12 3z"/></svg>',
+  mvUp:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg>',
+  mvDown:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg>',
+  refresh:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 4v5h-5"/></svg>'
+};
+
+/* ============================ storage ============================ */
+const KEY = "flow.data.v1";
+
+const BUCKETS = [
+  { id:"week",    label:"This week" },
+  { id:"soon",    label:"Coming up" },
+  { id:"waiting", label:"Waiting on" },
+  { id:"later",   label:"Later" }
+];
+const BUCKET_LABEL = Object.fromEntries(BUCKETS.map(b => [b.id, b.label]));
+BUCKET_LABEL.inbox = "Inbox";
+BUCKET_LABEL.bin = "Bin";
+
+const DD_THEMES = [
+  "Fees and costs",
+  "Risk management",
+  "Manager behaviour and culture",
+  "Performance and attribution",
+  "Portfolio construction",
+  "Red flags",
+  "Other questions worth asking"
+];
+
+const REVIEW_STEPS = [
+  "Sweep the paper book and Apple Notes into Capture",
+  "Clear the inbox",
+  "Review This week, work and personal",
+  "Chase anything overdue in Waiting on",
+  "Promote from Coming up into This week",
+  "Open Later and check nothing has become relevant",
+  "Reset both focus areas",
+  "Set Monday's list"
+];
+
+function blank(){
+  return {
+    schema: 1,
+    focus: { work:"", personal:"", reviewed:"" },
+    top3: { date:"", slots:["","",""] },
+    items: [],
+    ic: { actions:[], priv:[], insights:[], entries:[] },
+    journal: { actions:[], entries:[] },
+    dd: [],
+    review: { last:"", checks:[] },
+    settings: { theme:"auto" }
+  };
+}
+
+let S = blank();
+let dirty = false;
+
+function uid(){
+  try { if (crypto && crypto.randomUUID) return crypto.randomUUID(); } catch(e){}
+  return "i" + Date.now().toString(36) + Math.random().toString(36).slice(2,9);
+}
+function today(){
+  const d = new Date();
+  return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+}
+function prettyDate(iso){
+  if (!iso) return "";
+  const p = iso.split("-");
+  if (p.length !== 3) return iso;
+  const d = new Date(Number(p[0]), Number(p[1])-1, Number(p[2]));
+  if (isNaN(d)) return iso;
+  return d.toLocaleDateString("en-AU",{ weekday:"short", day:"numeric", month:"short" });
+}
+function daysSince(iso){
+  if (!iso) return Infinity;
+  const then = new Date(iso + "T00:00:00");
+  if (isNaN(then)) return Infinity;
+  return Math.floor((Date.now() - then.getTime()) / 86400000);
+}
+function esc(s){
+  return String(s == null ? "" : s).replace(/[&<>"']/g, c => (
+    { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]
+  ));
+}
+
+function migrate(d){
+  const base = blank();
+  if (!d || typeof d !== "object") return base;
+  const out = Object.assign(base, d);
+  out.focus = Object.assign(base.focus, d.focus || {});
+  out.top3 = Object.assign(base.top3, d.top3 || {});
+  out.ic = Object.assign(base.ic, d.ic || {});
+  out.journal = Object.assign(base.journal, d.journal || {});
+  out.review = Object.assign(base.review, d.review || {});
+  out.settings = Object.assign(base.settings, d.settings || {});
+  out.items = Array.isArray(d.items) ? d.items : [];
+  out.dd = Array.isArray(d.dd) ? d.dd : [];
+  out.items.forEach(it => {
+    if (!it.id) it.id = uid();
+    if (!it.bucket) it.bucket = "inbox";
+    if (!it.area) it.area = "work";
+    if (typeof it.done !== "boolean") it.done = false;
+  });
+  ["actions","priv","insights","entries"].forEach(k => { if (!Array.isArray(out.ic[k])) out.ic[k] = []; });
+  ["actions","entries"].forEach(k => { if (!Array.isArray(out.journal[k])) out.journal[k] = []; });
+  if (!Array.isArray(out.review.checks)) out.review.checks = [];
+  if (!Array.isArray(out.top3.slots)) out.top3.slots = ["","",""];
+  out.top3.slots = out.top3.slots.map(x =>
+    (x && typeof x === "object") ? { id: x.id || "", text: x.text || "" }
+                                 : { id: "", text: String(x || "") });
+  while (out.top3.slots.length < 3) out.top3.slots.push({ id:"", text:"" });
+  return out;
+}
+
+function load(){
+  try {
+    const raw = localStorage.getItem(KEY);
+    S = raw ? migrate(JSON.parse(raw)) : blank();
+  } catch(e){
+    console.error("Load failed", e);
+    S = blank();
+  }
+}
+function save(){
+  try {
+    localStorage.setItem(KEY, JSON.stringify(S));
+    dirty = false;
+  } catch(e){
+    console.error("Save failed", e);
+    toast("Could not save — storage may be full");
+  }
+}
+
+/* ============================ ui state ============================ */
+const U = {
+  tab: "today",
+  flowArea: "work",
+  meetTab: "ic",
+  tFilter: "all",
+  tShow: 100,
+  back: "today",
+  scroll: {},
+  tgQueue: [],
+  tgIndex: 0
+};
+
+/* ============================ helpers ============================ */
+function items(area, bucket){
+  return S.items.filter(i => i.area === area && i.bucket === bucket && !i.done);
+}
+function inboxCount(){
+  return S.items.filter(i => i.bucket === "inbox").length;
+}
+function addItem(text, area, bucket){
+  const t = String(text || "").trim();
+  if (!t) return null;
+  const it = { id:uid(), text:t, area:area || "work", bucket:bucket || "inbox", dupe:false, done:false, created:today() };
+  S.items.unshift(it);
+  save();
+  return it;
+}
+function findItem(id){ return S.items.find(i => i.id === id); }
+
+function slotItem(s){ return (s && typeof s === "object" && s.id) ? findItem(s.id) : null; }
+function slotText(s){
+  if (!s) return "";
+  if (typeof s === "string") return s;
+  const it = slotItem(s);
+  return it ? it.text : (s.text || "");
+}
+function slotFilled(s){ return !!slotText(s); }
+function todayIds(){
+  return S.top3.slots.map(x => (x && typeof x === "object") ? x.id : null).filter(Boolean);
+}
+
+/* Move an item within its own bucket. The items array holds every bucket, so
+   the swap targets the previous or next item sharing this area and bucket. */
+function moveItem(id, dir){
+  const it = findItem(id);
+  if (!it) return false;
+  const peers = S.items.filter(x => x.area === it.area && x.bucket === it.bucket);
+  const at = peers.indexOf(it);
+  const to = at + dir;
+  if (at < 0 || to < 0 || to >= peers.length) return false;
+  const a = S.items.indexOf(it), b = S.items.indexOf(peers[to]);
+  S.items[a] = peers[to];
+  S.items[b] = it;
+  save();
+  return true;
+}
+
+function moveSlot(k, dir){
+  const to = k + dir;
+  const slots = S.top3.slots;
+  if (to < 0 || to >= slots.length) return false;
+  const tmp = slots[k];
+  slots[k] = slots[to];
+  slots[to] = tmp;
+  save();
+  return true;
+}
+
+function toast(msg){
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.classList.add("on");
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => el.classList.remove("on"), 2000);
+}
+
+function applyTheme(){
+  const t = S.settings.theme;
+  const root = document.documentElement;
+  if (t === "light" || t === "dark") root.setAttribute("data-theme", t);
+  else root.removeAttribute("data-theme");
+}
+
+/* ============================ render: chrome ============================ */
+function renderTabs(){
+  const n = inboxCount();
+  const defs = [
+    ["today","Today",I.today,0],
+    ["flow","Flow",I.flow,0],
+    ["triagepage","Triage",I.inboxTab,n],
+    ["meet","Meetings",I.meet,0],
+    ["set","Settings",I.set,0]
+  ];
+  document.getElementById("tabs").innerHTML = defs.map(([id,label,icon,badge]) =>
+    '<div class="wrap">' +
+      '<button data-tab="' + id + '" aria-current="' + (U.tab === id) + '">' + icon + '<span>' + label + '</span></button>' +
+      (badge > 0 ? '<span class="pip">' + (badge > 99 ? "99+" : badge) + '</span>' : '') +
+    '</div>'
+  ).join("");
+}
+
+function setHead(title, sub, actions){
+  document.getElementById("topTitle").textContent = title;
+  document.getElementById("topSub").textContent = sub || "";
+  document.getElementById("topAct").innerHTML = actions || "";
+}
+
+/* ============================ render: Today ============================ */
+function viewToday(){
+  setHead("Today", prettyDate(today()), "");
+
+  if (S.top3.date !== today()) {
+    S.top3 = { date: today(), slots:[{id:"",text:""},{id:"",text:""},{id:"",text:""}] };
+    dirty = true;
+  }
+  while (S.top3.slots.length < 3) S.top3.slots.push({ id:"", text:"" });
+
+  let h = "";
+
+  const n = inboxCount();
+  if (n > 0) {
+    h += '<button class="remind" data-act="gotriage">' + I.inbox +
+         '<span class="rt">Triage your inbox &middot; ' + n + ' waiting</span>' + I.chev + '</button>';
+  }
+
+  h += dashBar();
+
+  h += '<div class="sectitle">Focus</div><div class="card tight">';
+  h += focusRow("work", "Work");
+  h += focusRow("personal", "Personal");
+  h += '</div>';
+
+  const slots = S.top3.slots;
+  const filled = slots.filter(slotFilled).length;
+  const doneNow = slots.filter(x => { const it = slotItem(x); return it && it.done; }).length;
+
+  h += '<div class="sectitle">Doing today' +
+       (filled ? ' <span style="color:var(--faint);font-weight:500">&middot; ' +
+        doneNow + ' of ' + filled + ' done</span>' : '') + '</div><div class="card tight">';
+
+  for (let k = 0; k < slots.length; k++){
+    const sl = slots[k];
+    const it = slotItem(sl);
+    const v = slotText(sl);
+    const isDone = it ? it.done : false;
+    const badge = it
+      ? '<button class="tick' + (isDone ? " on" : "") + '" data-act="toggle" data-id="' + it.id +
+        '" aria-label="Mark done" style="width:22px;height:22px;margin:0">' + I.check + '</button>'
+      : '<span class="n">' + (k+1) + '</span>';
+    h += '<div class="slot' + (k > 2 ? " extra" : "") + (isDone ? " struck" : "") + '">' +
+           badge +
+           '<button class="v' + (v ? "" : " ph") + '" data-act="top3" data-k="' + k + '"' +
+             ' style="text-align:left;flex:1;min-width:0">' +
+             esc(v || (k > 2 ? "Tap to set" : "Pull one from This week, or type it")) +
+           '</button>' +
+           '<span class="chev">' + I.chev + '</span>' +
+         '</div>';
+  }
+  if (filled >= 3 && slots.length < 9){
+    h += '<button class="slot" data-act="top3add">' +
+           '<span class="n">' + I.plus + '</span>' +
+           '<span class="v ph">Add another</span>' +
+         '</button>';
+  }
+  h += '</div>';
+  if (slots.length > 3){
+    h += '<p class="lead" style="margin-top:-6px;font-size:12.5px">' +
+         'Three is the usual target. Past that is a heavier day \u2014 worth a glance before you commit.</p>';
+  }
+
+  const onToday = todayIds();
+  const wk = items("work","week").concat(items("personal","week"))
+    .filter(i => onToday.indexOf(i.id) === -1);
+  h += '<div class="sectitle">This week' +
+       (wk.length ? ' <span style="color:var(--faint);font-weight:500">&middot; not today</span>' : '') +
+       '</div>';
+  if (!wk.length) h += '<div class="card"><div class="empty">' +
+    (onToday.length ? 'Everything in This week is on today\u2019s list.'
+                    : 'Nothing set. Move something up from Coming up.') + '</div></div>';
+  else h += '<div class="card tight">' + wk.map(itemRow).join("") + '</div>';
+
+  h += '<div class="sectitle">Capture</div>' +
+       '<div class="card">' +
+         '<textarea class="field" id="capture" rows="2" placeholder="Anything at all. It lands in the inbox."></textarea>' +
+         '<div class="btnrow" style="margin:10px 0 0"><button class="btn primary" data-act="capture">' + I.plus + 'Add to inbox</button></div>' +
+       '</div>';
+
+  if (dirty) save();
+  return h;
+}
+
+function doneLately(days){
+  const cut = Date.now() - days * 86400000;
+  return S.items.filter(i => {
+    if (!i.done || !i.doneAt) return false;
+    const t = new Date(i.doneAt + "T00:00:00").getTime();
+    return !isNaN(t) && t >= cut;
+  }).length;
+}
+
+function dashBar(){
+  const inbox = inboxCount();
+  const week = items("work","week").length + items("personal","week").length;
+  const done = doneLately(7);
+  const since = daysSince(S.review.last);
+  const reviewDue = since >= 7;
+  const reviewVal = since === Infinity ? "&mdash;" : (since === 0 ? "today" : since + "d");
+
+  const cell = (val, label, live, act) =>
+    (act ? '<button class="dcell' : '<div class="dcell') + (live ? " live" : "") + '"' +
+    (act ? ' data-act="' + act + '"' : '') + '>' +
+      '<span class="dn">' + val + '</span><span class="dl">' + label + '</span>' +
+    (act ? '</button>' : '</div>');
+
+  return '<div class="dash">' +
+    cell(inbox, "Inbox", inbox > 0, "gotriage") +
+    cell(week, "This week", false, "gotoflow") +
+    cell(done, "Done, 7d", false, null) +
+    cell(reviewVal, "Review", reviewDue, "goreview") +
+  '</div>';
+}
+
+function focusRow(kind, label){
+  const v = S.focus[kind];
+  return '<button class="slot" data-act="focus" data-kind="' + kind + '">' +
+           '<span class="pill' + (v ? "" : " grey") + '">' + label + '</span>' +
+           '<span class="v' + (v ? "" : " ph") + '">' + esc(v || "Not set") + '</span>' +
+           I.chev +
+         '</button>';
+}
+
+function itemRow(it){
+  const meta = [];
+  if (it.area === "personal") meta.push("Personal");
+  if (it.bucket !== "week") meta.push(BUCKET_LABEL[it.bucket]);
+  if (it.dupe) meta.push("Possible duplicate");
+  return '<div class="row' + (it.done ? " done" : "") + '">' +
+    '<button class="tick' + (it.done ? " on" : "") + '" data-act="toggle" data-id="' + it.id + '" aria-label="Mark done">' + I.check + '</button>' +
+    '<button class="body" style="text-align:left" data-act="item" data-id="' + it.id + '">' +
+      '<div class="t">' + esc(it.text) + '</div>' +
+      (meta.length ? '<div class="m">' + meta.map(esc).join(" &middot; ") + '</div>' : '') +
+    '</button>' +
+    '<span class="chev">' + I.chev + '</span>' +
+  '</div>';
+}
+
+/* ============================ render: Flow ============================ */
+function viewFlow(){
+  const n = inboxCount();
+  setHead("Flow", n ? n + " in the inbox" : "Inbox clear",
+    '<button class="iconbtn" data-act="addSheet" aria-label="Add">' + I.plus + '</button>');
+
+  let h = "";
+  if (n > 0) {
+    h += '<button class="banner" data-act="gotriage">' + I.inbox +
+         '<span class="bt">Triage ' + n + '</span>' + I.chev + '</button>';
+  }
+
+  h += '<div class="seg">' +
+    ['work','personal','reflection'].map(a =>
+      '<button data-act="area" data-area="' + a + '" aria-pressed="' + (U.flowArea === a) + '">' +
+      (a === "work" ? "Work" : a === "personal" ? "Personal" : "Notes") + '</button>').join("") +
+    '</div>';
+
+  if (U.flowArea === "reflection"){
+    const notes = S.items.filter(i => i.area === "reflection" && i.bucket !== "bin");
+    h += '<p class="lead">Things you wrote down that are not tasks. Kept for when you want them.</p>';
+    h += notes.length
+      ? '<div class="card tight">' + notes.map(noteRow).join("") + '</div>'
+      : '<div class="card"><div class="empty">No notes yet.</div></div>';
+    return h;
+  }
+
+  BUCKETS.forEach(b => {
+    const list = items(U.flowArea, b.id);
+    const done = S.items.filter(i => i.area === U.flowArea && i.bucket === b.id && i.done);
+    h += '<div class="sectitle">' + b.label + (list.length ? " &middot; " + list.length : "") + '</div>';
+    if (!list.length && !done.length){
+      h += '<div class="card"><div class="empty">Empty.</div></div>';
+    } else {
+      h += '<div class="card tight">' + list.map(itemRow).join("");
+      if (done.length){
+        h += '<details class="fold"><summary>' + I.caret + 'Done<span class="cnt">' + done.length + '</span></summary>' +
+             '<div class="foldbody">' + done.map(itemRow).join("") + '</div></details>';
+      }
+      h += '</div>';
+    }
+  });
+  return h;
+}
+
+
+/* ============================ similarity grouping ============================ */
+const STOP = new Set(("the a an and or for to of in on at with my me i is are be do does this that it " +
+  "from by as if then than so but not no any all some each into out up down over about " +
+  "get got go going make made need needs want what how when where which who why can could should " +
+  "would will shall have has had been being am eg etc ie plus").split(" "));
+
+function tokens(text){
+  return String(text || "")
+    .toLowerCase()
+    .replace(/\((?:second|third|fourth|fifth) entry\)/g, " ")
+    .replace(/\(unspecified\)/g, " ")
+    .replace(/[^a-z0-9$ ]+/g, " ")
+    .split(/\s+/)
+    .map(t => t.replace(/ies$/, "y").replace(/(es|s)$/, ""))
+    .filter(t => t.length > 1 && !STOP.has(t));
+}
+
+function properSet(list){
+  const names = new Set();
+  list.forEach(i => {
+    const words = String(i.text || "").split(/[\s\u2014\-,.;:()]+/).filter(Boolean);
+    for (let k = 1; k < words.length; k++){
+      const w = words[k];
+      if (/^[A-Z][a-z]{1,}$/.test(w) || /^[A-Z]{2,}$/.test(w)){
+        const t = w.toLowerCase().replace(/ies$/, "y").replace(/(es|s)$/, "");
+        if (t.length > 1 && !STOP.has(t)) names.add(t);
+      }
+    }
+  });
+  return names;
+}
+
+function overlap(a, b){
+  let hit = 0;
+  a.forEach(t => { if (b.has(t)) hit++; });
+  return hit;
+}
+
+/* Puts near-identical wording together in the list.
+   Pass one groups on wording overlap. Pass two gathers whatever is left
+   around a shared uncommon word, which is usually a name: Seb, Focal, Kylie.
+   Both are non-transitive, so a group forms around one seed and cannot snowball. */
+function groupSimilar(list){
+  const sets = list.map(i => new Set(tokens(i.text)));
+  const used = new Array(list.length).fill(false);
+  const groups = [];
+
+  for (let i = 0; i < list.length; i++){
+    if (used[i]) continue;
+    const members = [i];
+    used[i] = true;
+    const A = sets[i];
+    if (A.size){
+      for (let j = i + 1; j < list.length; j++){
+        if (used[j] || members.length >= 8) continue;
+        const B = sets[j];
+        if (!B.size) continue;
+        const hit = overlap(A, B);
+        if (!hit) continue;
+        const small = Math.min(A.size, B.size);
+        const big = Math.max(A.size, B.size);
+        const jac = hit / (A.size + B.size - hit);
+        if ((hit === small && small >= 2) ||
+            (hit === small && small === 1 && big <= 2) ||
+            jac >= 0.5){
+          members.push(j);
+          used[j] = true;
+        }
+      }
+    }
+    groups.push(members);
+  }
+
+  // pass two: pull lone items together around an uncommon shared name
+  const names = properSet(list);
+  const df = Object.create(null);
+  sets.forEach(st => st.forEach(t => { if (names.has(t)) df[t] = (df[t] || 0) + 1; }));
+
+  const singles = [];
+  const kept = [];
+  groups.forEach(g => { (g.length > 1 ? kept : singles).push(g); });
+
+  const byToken = Object.create(null);
+  const placed = Object.create(null);
+  singles.forEach(g => {
+    const idx = g[0];
+    let best = null, bestDf = Infinity;
+    sets[idx].forEach(t => {
+      if (!names.has(t)) return;
+      const n = df[t];
+      if (n >= 2 && n <= 8 && n < bestDf){ best = t; bestDf = n; }
+    });
+    if (best){
+      (byToken[best] = byToken[best] || []).push(idx);
+    } else {
+      kept.push(g);
+      placed[idx] = true;
+    }
+  });
+
+  Object.keys(byToken).forEach(t => {
+    const bucket = byToken[t].filter(idx => !placed[idx]);
+    if (bucket.length >= 2){
+      bucket.slice(0, 8).forEach(idx => { placed[idx] = true; });
+      kept.push(bucket.slice(0, 8));
+      bucket.slice(8).forEach(idx => { placed[idx] = true; kept.push([idx]); });
+    }
+  });
+  Object.keys(byToken).forEach(t => {
+    byToken[t].forEach(idx => { if (!placed[idx]){ placed[idx] = true; kept.push([idx]); } });
+  });
+
+  // final ordering: give every group its dominant name, then sort by it, so
+  // separate groups about the same person or fund still land next to each other
+  function groupKey(g){
+    const count = Object.create(null);
+    g.forEach(idx => sets[idx].forEach(t => {
+      if (names.has(t)) count[t] = (count[t] || 0) + 1;
+    }));
+    let best = "", bestN = 0, bestDf = Infinity;
+    Object.keys(count).forEach(t => {
+      const n = count[t], f = df[t] || 0;
+      if (n > bestN || (n === bestN && f < bestDf)){ best = t; bestN = n; bestDf = f; }
+    });
+    return best;
+  }
+
+  const tagged = kept.map(g => ({ g: g, key: groupKey(g), size: g.length }));
+  tagged.sort((a, b) => {
+    const an = a.key ? 0 : 1, bn = b.key ? 0 : 1;
+    if (an !== bn) return an - bn;              // anything with a name first
+    if (a.key !== b.key) return a.key < b.key ? -1 : 1;  // same name adjacent
+    return b.size - a.size;                     // then bigger clusters first
+  });
+
+  const out = [];
+  tagged.forEach(t => {
+    t.g.forEach((idx, n) => {
+      out.push(t.size > 1 ? Object.assign({}, list[idx], { _grp: t.size, _n: n + 1 }) : list[idx]);
+    });
+  });
+  return out;
+}
+
+/* ============================ render: Triage page ============================ */
+function viewTriagePage(){
+  const all = S.items.filter(i => i.bucket === "inbox");
+  setHead("Triage", all.length ? all.length + " waiting" : "Inbox clear", "");
+
+  if (!all.length){
+    return '<div class="card"><div class="empty">' +
+      'Inbox clear. Anything you capture on Today lands here to be sorted.</div></div>' +
+      '<div class="btnrow"><button class="btn full primary" data-act="gotoday">' + I.plus +
+      'Capture something</button></div>';
+  }
+
+  const f = U.tFilter;
+  const list = f === "all" ? all : all.filter(i => i.area === f);
+  const dupes = all.filter(i => i.dupe).length;
+
+  let h = '<p class="lead">Work down the list, or sort one at a time. ' +
+          'The test: would you actually be bothered if this never happened?</p>';
+
+  h += '<div class="btnrow">' +
+    '<button class="btn primary" data-act="triage">' + I.arrow + 'Sort one at a time</button>' +
+  '</div>';
+
+  h += '<div class="seg">' +
+    [["all","All"],["work","Work"],["personal","Personal"],["reflection","Notes"]].map(([id,label]) => {
+      const c = id === "all" ? all.length : all.filter(i => i.area === id).length;
+      return '<button data-act="tfilter" data-f="' + id + '" aria-pressed="' + (f === id) + '">' +
+             label + (c ? ' <span style="color:var(--faint);font-weight:500">' + c + '</span>' : '') +
+             '</button>';
+    }).join("") + '</div>';
+
+  if (dupes && f === "all"){
+    h += '<p class="lead" style="margin-top:-4px">Nothing has been deleted for you. ' +
+         dupes + ' were flagged as possible duplicates on the way across.</p>';
+  }
+
+  if (!list.length) return h + '<div class="card"><div class="empty">None in this group.</div></div>';
+
+  const ordered = groupSimilar(list);
+  const clustered = ordered.filter(i => i._grp).length;
+  if (clustered){
+    h += '<p class="lead" style="margin-top:-4px">' + clustered +
+         ' sit in groups of similar wording, listed together so you can clear a set at once.</p>';
+  }
+  const show = Math.min(U.tShow, ordered.length);
+  h += '<div class="card tight">' + ordered.slice(0, show).map(triageRow).join("") + '</div>';
+  if (show < ordered.length){
+    h += '<div class="btnrow"><button class="btn full quiet" data-act="tmore">' +
+         'Show ' + Math.min(100, ordered.length - show) + ' more &middot; ' +
+         (ordered.length - show) + ' remaining</button></div>';
+  }
+  return h;
+}
+
+function triageRow(it){
+  const meta = [];
+  meta.push(it.area === "work" ? "Work" : it.area === "personal" ? "Personal" : "Note");
+  if (it._grp) meta.push(it._n + " of " + it._grp + " similar");
+  else if (it.dupe) meta.push("Possible duplicate");
+  const opts = [["","Sort"]].concat(BUCKETS.map(b => [b.id, b.label])).concat([["bin","Bin it"]]);
+  return '<div class="row' + (it._grp ? ' grp' : '') + (it._grp && it._n === 1 ? ' grp-top' : '') + '">' +
+    '<button class="body" style="text-align:left" data-act="item" data-id="' + it.id + '">' +
+      '<div class="t">' + esc(it.text) + '</div>' +
+      '<div class="m">' + meta.map(esc).join(" &middot; ") + '</div>' +
+    '</button>' +
+    '<select class="pick" data-pick="' + it.id + '" aria-label="Sort this item">' +
+      opts.map(o => '<option value="' + o[0] + '">' + o[1] + '</option>').join("") +
+    '</select>' +
+  '</div>';
+}
+
+function noteRow(it){
+  return '<div class="row">' +
+    '<button class="body" style="text-align:left" data-act="item" data-id="' + it.id + '">' +
+      '<div class="t">' + esc(it.text) + '</div>' +
+    '</button>' +
+    '<span class="chev">' + I.chev + '</span>' +
+  '</div>';
+}
+
+/* ============================ render: Meetings ============================ */
+function viewMeet(){
+  const titles = { ic:"IC minutes", journal:"Meeting journal", dd:"DD cheat sheet" };
+  setHead("Meetings", titles[U.meetTab],
+    U.meetTab === "dd" ? "" :
+    '<button class="iconbtn" data-act="newEntry" aria-label="New entry">' + I.plus + '</button>');
+
+  let h = '<div class="seg">' +
+    [["ic","IC"],["journal","Journal"],["dd","DD"]].map(([id,label]) =>
+      '<button data-act="meettab" data-t="' + id + '" aria-pressed="' + (U.meetTab === id) + '">' + label + '</button>').join("") +
+    '</div>';
+
+  if (U.meetTab === "ic") h += meetIC();
+  else if (U.meetTab === "journal") h += meetJournal();
+  else h += meetDD();
+  return h;
+}
+
+function rollingList(list, path, placeholder, opts){
+  opts = opts || {};
+  let h = '<div class="card tight">';
+  if (!list.length) h += '<div class="empty">' + esc(placeholder) + '</div>';
+  else h += list.map(e => lineRow(e, path, opts)).join("");
+  h += '<button class="slot" data-act="addLine" data-path="' + path + '">' +
+         '<span class="n">' + I.plus + '</span><span class="v ph">Add</span>' +
+       '</button>';
+  h += '</div>';
+  return h;
+}
+
+function lineRow(e, path, opts){
+  const tickable = !opts.noTick;
+  return '<div class="row' + (e.done ? " done" : "") + '">' +
+    (tickable
+      ? '<button class="tick' + (e.done ? " on" : "") + '" data-act="toggleLine" data-path="' + path + '" data-id="' + e.id + '" aria-label="Mark done">' + I.check + '</button>'
+      : '') +
+    '<button class="body" style="text-align:left" data-act="line" data-path="' + path + '" data-id="' + e.id + '">' +
+      '<div class="t">' + esc(e.text) + '</div>' +
+    '</button>' +
+    '<span class="chev">' + I.chev + '</span>' +
+  '</div>';
+}
+
+function meetIC(){
+  let h = '<p class="lead">Urgent actions go straight to Flow. Everything else sweeps at the weekly review.</p>';
+  h += '<div class="sectitle">Actions</div>' + rollingList(S.ic.actions, "ic.actions", "No live IC actions.");
+  h += '<div class="sectitle">Private</div>' + rollingList(S.ic.priv, "ic.priv", "Nothing off the record yet.");
+  h += '<div class="sectitle">IC insights</div>' + rollingList(S.ic.insights, "ic.insights", "Questions and observations from IC members land here.", { noTick:true });
+
+  h += '<div class="sectitle">Meetings</div>';
+  if (!S.ic.entries.length){
+    h += '<div class="card"><div class="empty">No meetings recorded. Tap plus to add one.</div></div>';
+  } else {
+    h += '<div class="card tight">' + S.ic.entries.map(e =>
+      '<details class="fold"><summary>' + I.caret + esc(e.title || "IC meeting") +
+        '<span class="cnt">' + esc(prettyDate(e.date)) + '</span></summary>' +
+        '<div class="foldbody">' +
+          entryField(e, "ic", "minutes", "Minutes") +
+          entryField(e, "ic", "actions", "Actions") +
+          entryField(e, "ic", "priv", "Private notes") +
+          entryField(e, "ic", "insights", "Insights from this meeting") +
+          '<div class="btnrow" style="margin-top:12px">' +
+            '<button class="btn quiet warn" data-act="delEntry" data-kind="ic" data-id="' + e.id + '">' + I.trash + 'Delete</button>' +
+          '</div>' +
+        '</div>' +
+      '</details>').join("") + '</div>';
+  }
+  return h;
+}
+
+function meetJournal(){
+  let h = '<p class="lead">Internal meetings, coffee, lunch and fund manager one-on-ones. Jot as you go, then pull actions up here.</p>';
+  h += '<div class="sectitle">Actions</div>' + rollingList(S.journal.actions, "journal.actions", "No live actions.");
+
+  h += '<div class="sectitle">Entries</div>';
+  if (!S.journal.entries.length){
+    h += '<div class="card"><div class="empty">No entries. Tap plus to start one.</div></div>';
+  } else {
+    h += '<div class="card tight">' + S.journal.entries.map(e =>
+      '<details class="fold"><summary>' + I.caret + esc(e.title || "Meeting") +
+        '<span class="cnt">' + esc(prettyDate(e.date)) + '</span></summary>' +
+        '<div class="foldbody">' +
+          entryField(e, "journal", "notes", "Notes") +
+          entryField(e, "journal", "actions", "Actions") +
+          (e.kind === "fm" ? entryField(e, "journal", "email", "Draft email to the IC") : "") +
+          '<div class="btnrow" style="margin-top:12px">' +
+            (e.kind === "fm" && e.email
+              ? '<button class="btn quiet" data-act="copyEmail" data-id="' + e.id + '">' + I.mail + 'Copy email</button>'
+              : '') +
+            '<button class="btn quiet warn" data-act="delEntry" data-kind="journal" data-id="' + e.id + '">' + I.trash + 'Delete</button>' +
+          '</div>' +
+        '</div>' +
+      '</details>').join("") + '</div>';
+  }
+  return h;
+}
+
+function entryField(e, kind, field, label){
+  const v = e[field] || "";
+  return '<div style="margin-top:10px">' +
+    '<div style="font-size:12.5px;color:var(--faint);font-weight:600;margin-bottom:6px">' + esc(label) + '</div>' +
+    '<textarea class="field" rows="3" data-act="entryEdit" data-kind="' + kind + '" data-id="' + e.id + '" data-field="' + field + '" placeholder="Empty">' + esc(v) + '</textarea>' +
+  '</div>';
+}
+
+function meetDD(){
+  let h = '<p class="lead">Built from IC questions over time. Add to it after every meeting.</p>';
+  DD_THEMES.forEach(theme => {
+    const list = S.dd.filter(d => d.theme === theme);
+    h += '<div class="sectitle">' + esc(theme) + (list.length ? " &middot; " + list.length : "") + '</div>';
+    h += '<div class="card tight">';
+    if (!list.length) h += '<div class="empty">Nothing yet.</div>';
+    else h += list.map(d =>
+      '<div class="row">' +
+        '<button class="body" style="text-align:left" data-act="ddLine" data-id="' + d.id + '"><div class="t">' + esc(d.text) + '</div></button>' +
+        '<span class="chev">' + I.chev + '</span>' +
+      '</div>').join("");
+    h += '<button class="slot" data-act="addDD" data-theme="' + esc(theme) + '">' +
+           '<span class="n">' + I.plus + '</span><span class="v ph">Add</span></button>';
+    h += '</div>';
+  });
+  return h;
+}
+
+/* ============================ render: Settings ============================ */
+function viewSet(){
+  setHead("Settings", "", "");
+  const counts = {
+    inbox: inboxCount(),
+    live: S.items.filter(i => i.bucket !== "inbox" && i.bucket !== "bin" && !i.done).length,
+    done: S.items.filter(i => i.done).length,
+    bin: S.items.filter(i => i.bucket === "bin").length
+  };
+
+  let h = '<div class="sectitle">Weekly review</div><div class="card tight">';
+  REVIEW_STEPS.forEach((step, k) => {
+    const on = S.review.checks.indexOf(k) !== -1;
+    h += '<div class="row' + (on ? " done" : "") + '">' +
+      '<button class="tick' + (on ? " on" : "") + '" data-act="reviewCheck" data-k="' + k + '" aria-label="Done">' + I.check + '</button>' +
+      '<div class="body"><div class="t">' + esc(step) + '</div></div></div>';
+  });
+  h += '</div>';
+  h += '<div class="btnrow"><button class="btn full primary" data-act="finishReview">' + I.check + 'Finish review</button></div>';
+  h += '<p class="lead">' + (S.review.last ? "Last completed " + esc(prettyDate(S.review.last)) + "." : "Not completed yet.") +
+       ' Anchor this to an office day rather than a Sunday evening.</p>';
+
+  h += '<div class="sectitle">Appearance</div><div class="card tight">';
+  [["auto","Automatic"],["light","Light"],["dark","Dark"]].forEach(([id,label]) => {
+    const sel = S.settings.theme === id;
+    h += '<button class="optrow' + (sel ? " sel" : "") + '" data-act="theme" data-v="' + id + '">' +
+         (sel ? I.dotOn : I.dot) + esc(label) + '</button>';
+  });
+  h += '</div>';
+
+  h += '<div class="sectitle">Backup</div>' +
+       '<div class="card tight">' +
+         '<button class="optrow" data-act="export">' + I.down + 'Export a backup file</button>' +
+         '<button class="optrow" data-act="copyJson">' + I.edit + 'Copy backup to clipboard</button>' +
+         '<button class="optrow" data-act="importFile">' + I.up + 'Import from a file</button>' +
+         '<button class="optrow" data-act="importPaste">' + I.up + 'Import from pasted text</button>' +
+       '</div>' +
+       '<p class="lead">Everything lives on this phone only. Removing the home screen icon or clearing Safari data wipes it, so export now and then.</p>';
+
+  h += '<div class="sectitle">Contents</div><div class="card tight">' +
+    '<div class="optrow">' + I.inbox + 'Inbox<span class="r">' + counts.inbox + '</span></div>' +
+    '<div class="optrow">' + I.flow + 'Live items<span class="r">' + counts.live + '</span></div>' +
+    '<div class="optrow">' + I.check + 'Done<span class="r">' + counts.done + '</span></div>' +
+    '<div class="optrow">' + I.trash + 'In the bin<span class="r">' + counts.bin + '</span></div>' +
+  '</div>';
+
+  h += '<div class="sectitle">Clearing out</div><div class="card tight">' +
+    '<button class="optrow" data-act="clearDone">' + I.check + 'Remove completed items</button>' +
+    '<button class="optrow warn" data-act="emptyBin">' + I.trash + 'Empty the bin</button>' +
+    '<button class="optrow warn" data-act="wipe">' + I.x + 'Erase everything</button>' +
+  '</div>';
+
+  h += '<p class="lead" style="margin-top:18px;color:var(--faint);font-size:12.5px">Flow &middot; version 1</p>';
+  return h;
+}
+
+/* ============================ router ============================ */
+function render(){
+  const main = document.getElementById("view");
+  U.scroll[U.tab] = main.scrollTop;
+  let h = "";
+  if (U.tab === "today") h = viewToday();
+  else if (U.tab === "flow") h = viewFlow();
+  else if (U.tab === "triagepage") h = viewTriagePage();
+  else if (U.tab === "meet") h = viewMeet();
+  else h = viewSet();
+  main.innerHTML = h;
+  main.scrollTop = U.scroll[U.tab] || 0;
+  renderTabs();
+}
+function go(tab){
+  const main = document.getElementById("view");
+  U.scroll[U.tab] = main.scrollTop;
+  U.tab = tab;
+  render();
+  main.scrollTop = U.scroll[tab] || 0;
+}
+
+/* ============================ sheet ============================ */
+let sheetOpen = false;
+function openSheet(html){
+  const sh = document.getElementById("sheet");
+  sh.innerHTML = '<div class="grab"></div>' + html;
+  sh.classList.add("on");
+  document.getElementById("scrim").classList.add("on");
+  sheetOpen = true;
+}
+function closeSheet(){
+  document.getElementById("sheet").classList.remove("on");
+  document.getElementById("scrim").classList.remove("on");
+  sheetOpen = false;
+}
+
+function promptSheet(opts){
+  // opts: title, sub, value, multiline, cta, onSave
+  promptSheet._save = opts.onSave;
+  openSheet(
+    '<h2>' + esc(opts.title) + '</h2>' +
+    (opts.sub ? '<p class="sh-sub">' + esc(opts.sub) + '</p>' : '') +
+    (opts.multiline
+      ? '<textarea class="field" id="shIn" rows="5">' + esc(opts.value || "") + '</textarea>'
+      : '<textarea class="field" id="shIn" rows="2">' + esc(opts.value || "") + '</textarea>') +
+    '<div class="btnrow" style="margin-top:14px">' +
+      '<button class="btn quiet" data-act="closeSheet">Cancel</button>' +
+      '<button class="btn primary" data-act="sheetSave">' + esc(opts.cta || "Save") + '</button>' +
+    '</div>'
+  );
+  setTimeout(() => { const el = document.getElementById("shIn"); if (el){ el.focus(); } }, 240);
+}
+
+function itemSheet(id){
+  const it = findItem(id);
+  if (!it) return;
+  let h = '<h2>' + (it.area === "reflection" ? "Note" : "Item") + '</h2>' +
+          '<p class="sh-sub">' + esc(it.text) + '</p>';
+
+  if (it.area !== "reflection"){
+    h += '<div style="font-size:12.5px;color:var(--faint);font-weight:600;margin:4px 0 2px">Move to</div>';
+    BUCKETS.forEach(b => {
+      const sel = it.bucket === b.id;
+      h += '<button class="optrow' + (sel ? " sel" : "") + '" data-act="move" data-id="' + it.id + '" data-b="' + b.id + '">' +
+           (sel ? I.dotOn : I.dot) + b.label + '</button>';
+    });
+  }
+
+  if (it.bucket !== "inbox" && it.bucket !== "bin"){
+    const peers = S.items.filter(x => x.area === it.area && x.bucket === it.bucket);
+    const at = peers.indexOf(it);
+    if (peers.length > 1){
+      h += '<div style="font-size:12.5px;color:var(--faint);font-weight:600;margin:14px 0 2px">Order</div>';
+      if (at > 0) h += '<button class="optrow" data-act="itemUp" data-id="' + it.id + '">' + I.mvUp + 'Move up</button>';
+      if (at < peers.length - 1) h += '<button class="optrow" data-act="itemDown" data-id="' + it.id + '">' + I.mvDown + 'Move down</button>';
+      h += '<div class="optrow" style="color:var(--faint)">' + I.dot + 'Position ' + (at + 1) + ' of ' + peers.length + '</div>';
+    }
+  }
+
+  h += '<div style="font-size:12.5px;color:var(--faint);font-weight:600;margin:14px 0 2px">Change</div>';
+  h += '<button class="optrow" data-act="editItem" data-id="' + it.id + '">' + I.edit + 'Edit wording</button>';
+  h += '<button class="optrow" data-act="swapArea" data-id="' + it.id + '">' + I.arrow +
+       'Move to ' + (it.area === "work" ? "Personal" : it.area === "personal" ? "Work" : "Work") + '</button>';
+  if (it.area !== "reflection"){
+    h += '<button class="optrow" data-act="toTop3" data-id="' + it.id + '">' + I.today + 'Do this today</button>';
+  }
+  h += '<button class="optrow warn" data-act="binItem" data-id="' + it.id + '">' + I.trash + 'Move to the bin</button>';
+  openSheet(h);
+}
+
+/* ============================ triage ============================ */
+function startTriage(){
+  U.tgQueue = S.items.filter(i => i.bucket === "inbox").map(i => i.id);
+  U.tgIndex = 0;
+  document.getElementById("triage").classList.add("on");
+  renderTriage();
+}
+function endTriage(){
+  document.getElementById("triage").classList.remove("on");
+  save();
+  if (U.tab !== "triagepage"){ U.back = U.tab; U.tab = "triagepage"; U.scroll.triagepage = 0; }
+  render();
+}
+function renderTriage(){
+  const el = document.getElementById("triage");
+  const total = U.tgQueue.length;
+
+  if (U.tgIndex >= total){
+    const left = inboxCount();
+    el.innerHTML =
+      '<div class="tg-head"><div class="tg-bar"><i style="width:100%"></i></div>' +
+      '<span class="tg-count">' + total + '/' + total + '</span></div>' +
+      '<div class="tg-stage"><div class="tg-done">' +
+        '<h2>' + (left ? "Round finished" : "Inbox clear") + '</h2>' +
+        '<p>' + (left
+          ? left + " skipped and still waiting. Run it again when you are ready."
+          : "Everything has a home. The bin is kept until you empty it in Settings.") + '</p>' +
+        '<button class="btn primary full" data-act="tgClose">Done</button>' +
+      '</div></div>';
+    return;
+  }
+
+  const it = findItem(U.tgQueue[U.tgIndex]);
+  if (!it){ U.tgIndex++; renderTriage(); return; }
+
+  const pct = Math.round((U.tgIndex / total) * 100);
+  const meta = '<span class="pill' + (it.area === "work" ? "" : " grey") + '">' +
+    (it.area === "work" ? "Work" : it.area === "personal" ? "Personal" : "Note") + '</span>' +
+    (it.dupe ? '<span class="pill grey">Possible duplicate</span>' : '');
+
+  el.innerHTML =
+    '<div class="tg-head">' +
+      '<button class="iconbtn" data-act="tgClose" aria-label="Close">' + I.x + '</button>' +
+      '<div class="tg-bar"><i style="width:' + pct + '%"></i></div>' +
+      '<span class="tg-count">' + (U.tgIndex + 1) + '/' + total + '</span>' +
+    '</div>' +
+    '<div class="tg-stage"><div class="tg-card">' +
+      '<div class="meta">' + meta + '</div>' +
+      '<div class="txt">' + esc(it.text) + '</div>' +
+    '</div></div>' +
+    '<div class="tg-ask">Would you actually be bothered if this never happened?</div>' +
+    '<div class="tg-grid">' +
+      '<button class="btn" data-act="tg" data-b="week">This week</button>' +
+      '<button class="btn" data-act="tg" data-b="soon">Coming up</button>' +
+      '<button class="btn" data-act="tg" data-b="waiting">Waiting on</button>' +
+      '<button class="btn" data-act="tg" data-b="later">Later</button>' +
+      '<button class="btn quiet warn" data-act="tg" data-b="bin">Bin it</button>' +
+      '<button class="btn quiet" data-act="tg" data-b="skip">Skip</button>' +
+    '</div>';
+}
+function triageDecide(b){
+  const it = findItem(U.tgQueue[U.tgIndex]);
+  if (it && b !== "skip"){
+    it.bucket = b;
+    it.updated = today();
+    if (it.area === "reflection" && b !== "bin") it.bucket = "later";
+  }
+  U.tgIndex++;
+  if (U.tgIndex % 10 === 0) save();
+  renderTriage();
+}
+
+/* ============================ import / export ============================ */
+function exportData(){
+  const blob = new Blob([JSON.stringify(S, null, 2)], { type:"application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "flow-backup-" + today() + ".json";
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  toast("Backup exported");
+}
+function applyImport(text){
+  let d;
+  try { d = JSON.parse(text); }
+  catch(e){ toast("That is not valid JSON"); return; }
+  if (!d || typeof d !== "object"){ toast("Nothing to import"); return; }
+  S = migrate(d);
+  save();
+  applyTheme();
+  closeSheet();
+  go("flow");
+  toast("Imported " + S.items.length + " items");
+}
+function importFile(){
+  const inp = document.createElement("input");
+  inp.type = "file";
+  inp.accept = "application/json,.json,text/plain";
+  inp.onchange = () => {
+    const f = inp.files && inp.files[0];
+    if (!f) return;
+    const r = new FileReader();
+    r.onload = () => applyImport(String(r.result));
+    r.onerror = () => toast("Could not read that file");
+    r.readAsText(f);
+  };
+  inp.click();
+}
+function importPaste(){
+  promptSheet({
+    title:"Import from pasted text",
+    sub:"This replaces everything currently in the app. Export a backup first if you need one.",
+    value:"", multiline:true, cta:"Replace and import",
+    onSave: v => applyImport(v)
+  });
+}
+function copyJson(){
+  const t = JSON.stringify(S);
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(t).then(() => toast("Backup copied")).catch(() => toast("Could not copy"));
+  } else {
+    const ta = document.createElement("textarea");
+    ta.value = t; document.body.appendChild(ta); ta.select();
+    try { document.execCommand("copy"); toast("Backup copied"); } catch(e){ toast("Could not copy"); }
+    ta.remove();
+  }
+}
+
+/* ============================ path helpers ============================ */
+function listAt(path){
+  const p = path.split(".");
+  let o = S;
+  for (let k = 0; k < p.length; k++){ o = o[p[k]]; if (!o) return null; }
+  return Array.isArray(o) ? o : null;
+}
+
+/* ============================ events ============================ */
+document.addEventListener("click", ev => {
+  const tabBtn = ev.target.closest("#tabs button[data-tab]");
+  if (tabBtn){ go(tabBtn.dataset.tab); return; }
+
+  const el = ev.target.closest("[data-act]");
+  if (!el) return;
+  const a = el.dataset.act;
+  const id = el.dataset.id;
+
+  switch(a){
+
+    case "capture": {
+      const ta = document.getElementById("capture");
+      const v = ta ? ta.value : "";
+      if (!v.trim()){ toast("Nothing to add"); return; }
+      v.split("\n").map(s => s.trim()).filter(Boolean).forEach(line => addItem(line, "work", "inbox"));
+      ta.value = "";
+      ta.blur();
+      render();
+      toast("Added to inbox");
+      return;
+    }
+
+    case "gotriage": {
+      U.back = (U.tab === "triagepage") ? U.back : U.tab;
+      U.tShow = 100;
+      U.scroll.triagepage = 0;
+      go("triagepage");
+      return;
+    }
+    case "gotoday": go("today"); return;
+    case "gotoflow": go("flow"); return;
+    case "tfilter": U.tFilter = el.dataset.f; U.tShow = 100; U.scroll.triagepage = 0; render(); return;
+    case "tmore": U.tShow += 100; render(); return;
+
+    case "triage": startTriage(); return;
+    case "tgClose": endTriage(); return;
+    case "tg": triageDecide(el.dataset.b); return;
+
+    case "goreview": go("set"); return;
+
+    case "area": U.flowArea = el.dataset.area; U.scroll.flow = 0; render(); return;
+    case "meettab": U.meetTab = el.dataset.t; U.scroll.meet = 0; render(); return;
+
+    case "toggle": {
+      const it = findItem(id);
+      if (!it) return;
+      it.done = !it.done;
+      it.updated = today();
+      it.doneAt = it.done ? today() : "";
+      save(); render();
+      return;
+    }
+
+    case "item": itemSheet(id); return;
+
+    case "move": {
+      const it = findItem(id);
+      if (!it) return;
+      it.bucket = el.dataset.b; it.updated = today();
+      save(); closeSheet(); render();
+      toast("Moved to " + BUCKET_LABEL[el.dataset.b]);
+      return;
+    }
+
+    case "swapArea": {
+      const it = findItem(id);
+      if (!it) return;
+      it.area = it.area === "work" ? "personal" : "work";
+      if (it.bucket === "inbox") it.bucket = "later";
+      save(); closeSheet(); render();
+      toast("Moved to " + (it.area === "work" ? "Work" : "Personal"));
+      return;
+    }
+
+    case "itemUp": case "itemDown": {
+      if (moveItem(id, a === "itemUp" ? -1 : 1)){ closeSheet(); render(); toast("Moved"); }
+      return;
+    }
+
+    case "editItem": {
+      const it = findItem(id);
+      if (!it) return;
+      promptSheet({ title:"Edit", value:it.text, multiline:true, onSave: v => {
+        const t = v.trim();
+        if (t){ it.text = t; it.updated = today(); save(); }
+        closeSheet(); render();
+      }});
+      return;
+    }
+
+    case "binItem": {
+      const it = findItem(id);
+      if (!it) return;
+      it.bucket = "bin"; it.updated = today();
+      save(); closeSheet(); render();
+      toast("Moved to the bin");
+      return;
+    }
+
+    case "toTop3": {
+      const it = findItem(id);
+      if (!it) return;
+      const k = S.top3.slots.findIndex(x => !slotFilled(x));
+      S.top3.date = today();
+      if (k === -1) S.top3.slots.push({ id: it.id, text: it.text });
+      else S.top3.slots[k] = { id: it.id, text: it.text };
+      if (it.bucket !== "week"){ it.bucket = "week"; it.updated = today(); }
+      save(); closeSheet(); go("today");
+      toast("Added to today");
+      return;
+    }
+
+    case "top3": {
+      const k = Number(el.dataset.k);
+      const already = todayIds();
+      const cur = S.top3.slots[k];
+      const pool = items("work","week").concat(items("personal","week"))
+        .filter(p => already.indexOf(p.id) === -1 || (cur && cur.id === p.id));
+      let h = '<h2>Doing today &middot; ' + (k+1) + '</h2>';
+      if (slotFilled(cur)) h += '<p class="sh-sub">' + esc(slotText(cur)) + '</p>';
+      if (slotFilled(cur) && S.top3.slots.length > 1){
+        h += '<div style="font-size:12.5px;color:var(--faint);font-weight:600;margin:4px 0 2px">Order</div>';
+        if (k > 0) h += '<button class="optrow" data-act="slotUp" data-k="' + k + '">' + I.mvUp + 'Move up</button>';
+        if (k < S.top3.slots.length - 1) h += '<button class="optrow" data-act="slotDown" data-k="' + k + '">' + I.mvDown + 'Move down</button>';
+      }
+      if (slotFilled(cur)) h += '<div style="font-size:12.5px;color:var(--faint);font-weight:600;margin:14px 0 2px">Swap for</div>';
+      if (pool.length){
+        h += '<div style="font-size:12.5px;color:var(--faint);font-weight:600;margin:4px 0 2px">From This week</div>';
+        h += pool.slice(0,12).map(p =>
+          '<button class="optrow" data-act="top3pick" data-k="' + k + '" data-id="' + p.id + '">' +
+          I.arrow + esc(p.text) + '</button>').join("");
+      }
+      h += '<div style="font-size:12.5px;color:var(--faint);font-weight:600;margin:14px 0 2px">Or</div>';
+      h += '<button class="optrow" data-act="top3type" data-k="' + k + '">' + I.edit + 'Type something else</button>';
+      if (S.top3.slots[k]) h += '<button class="optrow warn" data-act="top3clear" data-k="' + k + '">' + I.x +
+        (k > 2 ? 'Remove from today' : 'Clear this slot') + '</button>';
+      openSheet(h);
+      return;
+    }
+    case "slotUp": case "slotDown": {
+      if (moveSlot(Number(el.dataset.k), a === "slotUp" ? -1 : 1)){ closeSheet(); render(); toast("Reordered"); }
+      return;
+    }
+
+    case "top3pick": {
+      const it = findItem(el.dataset.id);
+      if (it){ S.top3.date = today(); S.top3.slots[Number(el.dataset.k)] = { id: it.id, text: it.text }; save(); }
+      closeSheet(); render();
+      return;
+    }
+    case "top3type": {
+      const k = Number(el.dataset.k);
+      promptSheet({ title:"Doing today &middot; " + (k+1), value:slotText(S.top3.slots[k]), onSave: v => {
+        S.top3.date = today(); S.top3.slots[k] = { id:"", text:v.trim() }; save(); closeSheet(); render();
+      }});
+      return;
+    }
+    case "top3clear": {
+      const k = Number(el.dataset.k);
+      if (k > 2) S.top3.slots.splice(k, 1);
+      else S.top3.slots[k] = { id:"", text:"" };
+      save(); closeSheet(); render();
+      return;
+    }
+    case "top3add": {
+      S.top3.date = today();
+      S.top3.slots.push({ id:"", text:"" });
+      save(); render();
+      const k = S.top3.slots.length - 1;
+      const already = todayIds();
+      const pool = items("work","week").concat(items("personal","week"))
+        .filter(p => already.indexOf(p.id) === -1);
+      let hh = '<h2>Doing today &middot; ' + (k+1) + '</h2>';
+      if (pool.length){
+        hh += '<div style="font-size:12.5px;color:var(--faint);font-weight:600;margin:4px 0 2px">From This week</div>';
+        hh += pool.slice(0,12).map(p =>
+          '<button class="optrow" data-act="top3pick" data-k="' + k + '" data-id="' + p.id + '">' +
+          I.arrow + esc(p.text) + '</button>').join("");
+      }
+      hh += '<div style="font-size:12.5px;color:var(--faint);font-weight:600;margin:14px 0 2px">Or</div>';
+      hh += '<button class="optrow" data-act="top3type" data-k="' + k + '">' + I.edit + 'Type something else</button>';
+      hh += '<button class="optrow warn" data-act="top3clear" data-k="' + k + '">' + I.x + 'Remove from today</button>';
+      openSheet(hh);
+      return;
+    }
+
+    case "focus": {
+      const kind = el.dataset.kind;
+      promptSheet({
+        title: (kind === "work" ? "Work" : "Personal") + " focus",
+        sub:"Where your attention goes when there is no fire to fight.",
+        value:S.focus[kind] || "",
+        onSave: v => { S.focus[kind] = v.trim(); S.focus.reviewed = today(); save(); closeSheet(); render(); }
+      });
+      return;
+    }
+
+    case "addSheet": {
+      const area = U.flowArea === "reflection" ? "work" : U.flowArea;
+      promptSheet({
+        title:"Add to " + (area === "work" ? "Work" : "Personal"),
+        sub:"One per line. These land in This week.",
+        value:"", multiline:true, cta:"Add",
+        onSave: v => {
+          let n = 0;
+          v.split("\n").map(s => s.trim()).filter(Boolean).forEach(line => { addItem(line, area, "week"); n++; });
+          closeSheet(); render();
+          if (n) toast(n === 1 ? "Added" : n + " added");
+        }
+      });
+      return;
+    }
+
+    case "addLine": {
+      const path = el.dataset.path;
+      promptSheet({ title:"Add", value:"", multiline:true, cta:"Add", onSave: v => {
+        const list = listAt(path);
+        if (list){
+          v.split("\n").map(s => s.trim()).filter(Boolean).forEach(t => list.push({ id:uid(), text:t, done:false }));
+          save();
+        }
+        closeSheet(); render();
+      }});
+      return;
+    }
+
+    case "toggleLine": {
+      const list = listAt(el.dataset.path);
+      const e = list && list.find(x => x.id === id);
+      if (e){ e.done = !e.done; save(); render(); }
+      return;
+    }
+
+    case "line": {
+      const path = el.dataset.path;
+      const list = listAt(path);
+      const e = list && list.find(x => x.id === id);
+      if (!e) return;
+      let h = '<h2>Line</h2><p class="sh-sub">' + esc(e.text) + '</p>';
+      h += '<button class="optrow" data-act="lineEdit" data-path="' + path + '" data-id="' + id + '">' + I.edit + 'Edit wording</button>';
+      h += '<button class="optrow" data-act="lineToFlow" data-path="' + path + '" data-id="' + id + '">' + I.arrow + 'Send to Flow, This week</button>';
+      h += '<button class="optrow warn" data-act="lineDel" data-path="' + path + '" data-id="' + id + '">' + I.trash + 'Delete</button>';
+      openSheet(h);
+      return;
+    }
+    case "lineEdit": {
+      const path = el.dataset.path;
+      const list = listAt(path);
+      const e = list && list.find(x => x.id === id);
+      if (!e) return;
+      promptSheet({ title:"Edit", value:e.text, multiline:true, onSave: v => {
+        const t = v.trim(); if (t) { e.text = t; save(); }
+        closeSheet(); render();
+      }});
+      return;
+    }
+    case "lineToFlow": {
+      const list = listAt(el.dataset.path);
+      const e = list && list.find(x => x.id === id);
+      if (!e) return;
+      addItem(e.text, "work", "week");
+      closeSheet(); render();
+      toast("Sent to Flow");
+      return;
+    }
+    case "lineDel": {
+      const list = listAt(el.dataset.path);
+      const k = list ? list.findIndex(x => x.id === id) : -1;
+      if (k > -1){ list.splice(k,1); save(); }
+      closeSheet(); render();
+      return;
+    }
+
+    case "newEntry": {
+      const kind = U.meetTab;
+      if (kind === "ic"){
+        promptSheet({ title:"New IC meeting", sub:"Topic or fund manager.", value:"", cta:"Create", onSave: v => {
+          S.ic.entries.unshift({ id:uid(), date:today(), title:v.trim() || "IC meeting", minutes:"", actions:"", priv:"", insights:"" });
+          save(); closeSheet(); render();
+        }});
+      } else {
+        let h = '<h2>New entry</h2><p class="sh-sub">Which kind?</p>';
+        h += '<button class="optrow" data-act="newJ" data-kind="fm">' + I.meet + 'Fund manager one-on-one</button>';
+        h += '<button class="optrow" data-act="newJ" data-kind="cas">' + I.dot + 'Internal, coffee or lunch</button>';
+        openSheet(h);
+      }
+      return;
+    }
+    case "newJ": {
+      const kind = el.dataset.kind;
+      promptSheet({
+        title: kind === "fm" ? "Fund manager one-on-one" : "Internal, coffee or lunch",
+        sub:"Who, or what it is about.",
+        value:"", cta:"Create",
+        onSave: v => {
+          S.journal.entries.unshift({
+            id:uid(), date:today(), kind:kind,
+            title:v.trim() || (kind === "fm" ? "Fund manager" : "Catch-up"),
+            notes:"", actions:"", email: kind === "fm" ? "" : undefined
+          });
+          save(); closeSheet(); render();
+        }
+      });
+      return;
+    }
+    case "delEntry": {
+      const kind = el.dataset.kind;
+      const list = kind === "ic" ? S.ic.entries : S.journal.entries;
+      const k = list.findIndex(x => x.id === id);
+      if (k > -1){ list.splice(k,1); save(); render(); toast("Deleted"); }
+      return;
+    }
+    case "copyEmail": {
+      const e = S.journal.entries.find(x => x.id === id);
+      if (!e || !e.email) return;
+      if (navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(e.email).then(() => toast("Email copied")).catch(() => toast("Could not copy"));
+      }
+      return;
+    }
+
+    case "addDD": {
+      const theme = el.dataset.theme;
+      promptSheet({ title:esc(theme), sub:"One per line.", value:"", multiline:true, cta:"Add", onSave: v => {
+        v.split("\n").map(s => s.trim()).filter(Boolean).forEach(t => S.dd.push({ id:uid(), theme:theme, text:t }));
+        save(); closeSheet(); render();
+      }});
+      return;
+    }
+    case "ddLine": {
+      const d = S.dd.find(x => x.id === id);
+      if (!d) return;
+      let h = '<h2>Cheat sheet line</h2><p class="sh-sub">' + esc(d.text) + '</p>';
+      h += '<button class="optrow" data-act="ddEdit" data-id="' + id + '">' + I.edit + 'Edit wording</button>';
+      h += '<button class="optrow warn" data-act="ddDel" data-id="' + id + '">' + I.trash + 'Delete</button>';
+      openSheet(h);
+      return;
+    }
+    case "ddEdit": {
+      const d = S.dd.find(x => x.id === id);
+      if (!d) return;
+      promptSheet({ title:"Edit", value:d.text, multiline:true, onSave: v => {
+        const t = v.trim(); if (t){ d.text = t; save(); }
+        closeSheet(); render();
+      }});
+      return;
+    }
+    case "ddDel": {
+      const k = S.dd.findIndex(x => x.id === id);
+      if (k > -1){ S.dd.splice(k,1); save(); }
+      closeSheet(); render();
+      return;
+    }
+
+    case "reviewCheck": {
+      const k = Number(el.dataset.k);
+      const at = S.review.checks.indexOf(k);
+      if (at > -1) S.review.checks.splice(at,1); else S.review.checks.push(k);
+      save(); render();
+      return;
+    }
+    case "finishReview": {
+      S.review.last = today();
+      S.review.checks = [];
+      save(); render();
+      toast("Review complete");
+      return;
+    }
+
+    case "theme": {
+      S.settings.theme = el.dataset.v;
+      save(); applyTheme(); render();
+      return;
+    }
+
+    case "export": exportData(); return;
+    case "copyJson": copyJson(); return;
+    case "importFile": importFile(); return;
+    case "importPaste": importPaste(); return;
+
+    case "clearDone": {
+      const before = S.items.length;
+      S.items = S.items.filter(i => !i.done);
+      save(); render();
+      toast((before - S.items.length) + " removed");
+      return;
+    }
+    case "emptyBin": {
+      const before = S.items.length;
+      S.items = S.items.filter(i => i.bucket !== "bin");
+      save(); render();
+      toast((before - S.items.length) + " deleted");
+      return;
+    }
+    case "wipe": {
+      openSheet('<h2>Erase everything</h2>' +
+        '<p class="sh-sub">Every item, meeting and note on this phone. This cannot be undone. Export a backup first.</p>' +
+        '<div class="btnrow" style="margin-top:8px">' +
+          '<button class="btn quiet" data-act="closeSheet">Cancel</button>' +
+          '<button class="btn warn" data-act="wipeYes">Erase</button>' +
+        '</div>');
+      return;
+    }
+    case "wipeYes": {
+      S = blank(); save(); applyTheme(); closeSheet(); go("today");
+      toast("Erased");
+      return;
+    }
+
+    case "sheetSave": {
+      const el2 = document.getElementById("shIn");
+      const fn = promptSheet._save;
+      if (fn) fn(el2 ? el2.value : "");
+      return;
+    }
+    case "closeSheet": closeSheet(); return;
+  }
+});
+
+document.getElementById("scrim").addEventListener("click", closeSheet);
+
+document.addEventListener("change", ev => {
+  const pick = ev.target.closest("[data-pick]");
+  if (pick){
+    const it = findItem(pick.dataset.pick);
+    const v = pick.value;
+    if (it && v){
+      it.bucket = (it.area === "reflection" && v !== "bin") ? "later" : v;
+      it.updated = today();
+      save(); render();
+      toast(v === "bin" ? "Binned" : "Moved to " + BUCKET_LABEL[v]);
+    }
+    return;
+  }
+  const el = ev.target.closest('[data-act="entryEdit"]');
+  if (!el) return;
+  const list = el.dataset.kind === "ic" ? S.ic.entries : S.journal.entries;
+  const e = list.find(x => x.id === el.dataset.id);
+  if (e){ e[el.dataset.field] = el.value; save(); }
+});
+
+document.addEventListener("keydown", ev => {
+  if (ev.key === "Escape" && sheetOpen) closeSheet();
+});
+
+/* ============================ boot ============================ */
+load();
+applyTheme();
+render();
+
+try {
+  const mq = window.matchMedia("(prefers-color-scheme: dark)");
+  const fn = () => { if (S.settings.theme === "auto") applyTheme(); };
+  if (mq.addEventListener) mq.addEventListener("change", fn);
+  else if (mq.addListener) mq.addListener(fn);
+} catch(e){}
+
+if ("serviceWorker" in navigator){
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
