@@ -2,13 +2,17 @@
    On signal you get the newest file; offline you get the last cached copy.
    Never touches localStorage, so app data is unaffected by any update. */
 
-const CACHE = "flow-v1";
+const CACHE = "flow-v2";
 const TIMEOUT = 2500;
 
 const ASSETS = [
   "./",
   "./index.html",
   "./manifest.webmanifest",
+  "./favicon.ico",
+  "./icon-16.png",
+  "./icon-32.png",
+  "./icon-48.png",
   "./icon-180.png",
   "./icon-192.png",
   "./icon-512.png"
