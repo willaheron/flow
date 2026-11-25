@@ -702,6 +702,151 @@ function save(){
     console.error("Save failed", e);
     toast("Could not save — storage may be full");
   }
+  if (!applyingRemote && typeof SY === "object" && syncOn()){
+    SY.dirty = true;
+    saveSync();
+    scheduleSync();
+  }
+}
+
+
+/* ============================ sync ============================
+   One secret gist holds the data; each device keeps its own token.
+   The token lives under a separate storage key so it never travels
+   inside an export file and an import cannot clobber it.
+   A revision counter on the payload catches the case where both
+   devices changed since the last sync, rather than silently
+   overwriting whichever pushed second. */
+const SYNC_KEY = "flow.sync.v1";
+const GIST_FILE = "flow-data.json";
+const GIST_DESC = "Flow — personal task data (private)";
+
+let SY = { token:"", gistId:"", baseRev:0, lastSync:"", device:"", dirty:false, auto:true };
+let applyingRemote = false;
+let syncTimer = null;
+let syncing = false;
+
+function loadSync(){
+  try {
+    const raw = localStorage.getItem(SYNC_KEY);
+    if (raw) SY = Object.assign(SY, JSON.parse(raw));
+  } catch(e){}
+  if (!SY.device) SY.device = guessDevice();
+}
+function saveSync(){
+  try { localStorage.setItem(SYNC_KEY, JSON.stringify(SY)); } catch(e){}
+}
+function guessDevice(){
+  const ua = navigator.userAgent || "";
+  if (/iPhone/i.test(ua)) return "iPhone";
+  if (/iPad/i.test(ua)) return "iPad";
+  if (/Macintosh/i.test(ua)) return "Mac";
+  if (/Windows/i.test(ua)) return "PC";
+  if (/Android/i.test(ua)) return "Android";
+  return "Browser";
+}
+function syncOn(){ return !!(SY.token && SY.gistId); }
+
+function gh(path, opts){
+  opts = opts || {};
+  return fetch("https://api.github.com" + path, {
+    method: opts.method || "GET",
+    headers: {
+      "Authorization": "Bearer " + SY.token,
+      "Accept": "application/vnd.github+json",
+      "Content-Type": "application/json"
+    },
+    body: opts.body ? JSON.stringify(opts.body) : undefined
+  }).then(r => {
+    if (r.status === 401) throw new Error("Token rejected. Check it has gist access.");
+    if (r.status === 403) throw new Error("GitHub refused the request. Rate limited, or the token lacks gist access.");
+    if (r.status === 404) throw new Error("notfound");
+    if (!r.ok) throw new Error("GitHub returned " + r.status);
+    return r.json();
+  });
+}
+
+function payload(rev){
+  return JSON.stringify({ rev: rev, at: new Date().toISOString(), device: SY.device, data: S }, null, 1);
+}
+function readGist(g){
+  const f = g.files && g.files[GIST_FILE];
+  if (!f || !f.content) return null;
+  try { return JSON.parse(f.content); } catch(e){ return null; }
+}
+
+function findOrCreateGist(){
+  return gh("/gists?per_page=100").then(list => {
+    const hit = (list || []).find(g => g.files && g.files[GIST_FILE]);
+    if (hit) return { id: hit.id, existing: true };
+    return gh("/gists", { method:"POST", body:{
+      description: GIST_DESC, public: false,
+      files: { [GIST_FILE]: { content: payload(1) } }
+    }}).then(g => ({ id: g.id, existing: false }));
+  });
+}
+
+function pull(opts){
+  opts = opts || {};
+  if (!syncOn()) return Promise.reject(new Error("Sync is not set up on this device."));
+  return gh("/gists/" + SY.gistId).then(g => {
+    const p = readGist(g);
+    if (!p || !p.data) throw new Error("That gist has no Flow data in it.");
+    if (p.rev === SY.baseRev && !opts.force) return { status:"current" };
+    if (SY.dirty && p.rev > SY.baseRev && !opts.force) return { status:"conflict", remote:p };
+    applyingRemote = true;
+    S = migrate(p.data);
+    save();
+    applyingRemote = false;
+    SY.baseRev = p.rev; SY.dirty = false; SY.lastSync = new Date().toISOString();
+    saveSync();
+    applyTheme();
+    return { status:"pulled", from:p.device, rev:p.rev };
+  });
+}
+
+function push(opts){
+  opts = opts || {};
+  if (!syncOn()) return Promise.reject(new Error("Sync is not set up on this device."));
+  return gh("/gists/" + SY.gistId).then(g => {
+    const p = readGist(g);
+    const remoteRev = p ? p.rev : 0;
+    if (remoteRev > SY.baseRev && !opts.force) return { status:"conflict", remote:p };
+    const next = remoteRev + 1;
+    return gh("/gists/" + SY.gistId, { method:"PATCH", body:{
+      description: GIST_DESC, files: { [GIST_FILE]: { content: payload(next) } }
+    }}).then(() => {
+      SY.baseRev = next; SY.dirty = false; SY.lastSync = new Date().toISOString();
+      saveSync();
+      return { status:"pushed", rev:next };
+    });
+  });
+}
+
+function scheduleSync(){
+  if (!syncOn() || !SY.auto || applyingRemote) return;
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(() => {
+    if (syncing || !SY.dirty) return;
+    syncing = true;
+    push().then(r => {
+      syncing = false;
+      if (r.status === "conflict"){ SY.auto = false; saveSync(); render(); toast("Sync paused — both devices changed"); }
+      else if (U.tab === "set") render();
+    }).catch(() => { syncing = false; });
+  }, 2500);
+}
+
+function syncAgo(){
+  if (!SY.lastSync) return "never";
+  const mins = Math.floor((Date.now() - new Date(SY.lastSync).getTime()) / 60000);
+  if (isNaN(mins)) return "never";
+  if (mins < 1) return "just now";
+  if (mins < 60) return mins + " min ago";
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return hrs + (hrs === 1 ? " hour ago" : " hours ago");
+  const d = Math.floor(hrs / 24);
+  return d + (d === 1 ? " day ago" : " days ago");
 }
 
 /* ============================ ui state ============================ */
@@ -1375,6 +1520,28 @@ function viewSet(){
   });
   h += '</div>';
 
+  h += '<div class="sectitle">Sync</div>';
+  if (!syncOn()){
+    h += '<div class="card tight">' +
+      '<button class="optrow" data-act="syncSetup">' + I.refresh + 'Set up sync across devices</button>' +
+    '</div>' +
+    '<p class="lead">Keeps this phone and your computer on the same list through a secret GitHub gist. ' +
+    'Needs a token with gist access, pasted once per device.' +
+    (location.hostname.indexOf("github.io") === -1
+      ? ' Only works on the hosted app, not in a preview.' : '') + '</p>';
+  } else {
+    h += '<div class="card tight">' +
+      '<div class="optrow">' + I.refresh + 'Last synced<span class="r">' + esc(syncAgo()) + '</span></div>' +
+      '<div class="optrow">' + I.dot + 'This device<span class="r">' + esc(SY.device) + '</span></div>' +
+      '<div class="optrow">' + (SY.dirty ? I.up : I.check) + (SY.dirty ? 'Changes not yet sent' : 'Up to date') + '</div>' +
+      '<button class="optrow" data-act="syncNow">' + I.down + 'Sync now</button>' +
+      '<button class="optrow' + (SY.auto ? ' sel' : '') + '" data-act="syncAuto">' +
+        (SY.auto ? I.dotOn : I.dot) + 'Sync automatically</button>' +
+      '<button class="optrow warn" data-act="syncOff">' + I.x + 'Disconnect this device</button>' +
+    '</div>';
+    if (!SY.auto) h += '<p class="lead">Automatic sync is off. Use Sync now after you make changes.</p>';
+  }
+
   h += '<div class="sectitle">Backup</div>' +
        '<div class="card tight">' +
          '<button class="optrow" data-act="export">' + I.down + 'Export a backup file</button>' +
@@ -1490,6 +1657,20 @@ function itemSheet(id){
   }
   h += '<button class="optrow warn" data-act="binItem" data-id="' + it.id + '">' + I.trash + 'Move to the bin</button>';
   openSheet(h);
+}
+
+function conflictSheet(remote){
+  const when = remote && remote.at ? new Date(remote.at) : null;
+  const theirs = remote && remote.data && Array.isArray(remote.data.items) ? remote.data.items.length : "?";
+  openSheet('<h2>Both devices changed</h2>' +
+    '<p class="sh-sub">This device has ' + S.items.length + ' items with unsent changes. ' +
+    (remote ? ('The shared copy has ' + theirs + ' items, last written by ' +
+      esc(remote.device || "another device") + (when && !isNaN(when) ? ' on ' + when.toLocaleString("en-AU") : '') + '.')
+    : '') +
+    ' Pick one — the other is replaced.</p>' +
+    '<button class="optrow" data-act="syncKeepMine">' + I.up + 'Keep this device, overwrite the other</button>' +
+    '<button class="optrow" data-act="syncTakeTheirs">' + I.down + 'Take the other, discard changes here</button>' +
+    '<button class="optrow" data-act="closeSheet">' + I.x + 'Decide later</button>');
 }
 
 /* ============================ triage ============================ */
@@ -2006,6 +2187,103 @@ document.addEventListener("click", ev => {
       return;
     }
 
+    case "syncSetup": {
+      openSheet('<h2>Set up sync</h2>' +
+        '<p class="sh-sub">On github.com go to Settings, Developer settings, Personal access tokens, ' +
+        'Tokens (classic). Generate a new token, tick only <strong>gist</strong>, and paste it below. ' +
+        'Do the same on your other device to join the same list.</p>' +
+        '<textarea class="field" id="shIn" rows="3" placeholder="ghp_..."></textarea>' +
+        '<div class="btnrow" style="margin-top:14px">' +
+          '<button class="btn quiet" data-act="closeSheet">Cancel</button>' +
+          '<button class="btn primary" data-act="syncConnect">Connect</button>' +
+        '</div>');
+      return;
+    }
+
+    case "syncConnect": {
+      const inp = document.getElementById("shIn");
+      const tok = inp ? inp.value.trim() : "";
+      if (!tok){ toast("Paste a token first"); return; }
+      SY.token = tok;
+      toast("Connecting…");
+      findOrCreateGist().then(res => {
+        SY.gistId = res.id;
+        SY.baseRev = 0;
+        saveSync();
+        if (res.existing){
+          return pull({ force:true }).then(() => {
+            closeSheet(); render();
+            toast("Connected — pulled " + S.items.length + " items");
+          });
+        }
+        SY.baseRev = 1; SY.dirty = false; SY.lastSync = new Date().toISOString();
+        saveSync();
+        closeSheet(); render();
+        toast("Connected — this device is now the source");
+        return null;
+      }).catch(err => {
+        SY.token = ""; SY.gistId = ""; saveSync();
+        closeSheet();
+        openSheet('<h2>Could not connect</h2><p class="sh-sub">' + esc(err.message) + '</p>' +
+          '<div class="btnrow"><button class="btn full quiet" data-act="closeSheet">Close</button></div>');
+      });
+      return;
+    }
+
+    case "syncNow": {
+      if (syncing){ toast("Already syncing"); return; }
+      syncing = true; toast("Syncing…");
+      pull().then(r => {
+        if (r.status === "conflict"){ syncing = false; conflictSheet(r.remote); return null; }
+        if (!SY.dirty){
+          syncing = false; render();
+          toast(r.status === "pulled" ? "Pulled from " + (r.from || "your other device") : "Up to date");
+          return null;
+        }
+        return push().then(r2 => {
+          syncing = false;
+          if (r2.status === "conflict"){ conflictSheet(r2.remote); return; }
+          render();
+          toast(r.status === "pulled" ? "Merged with " + (r.from || "your other device") : "Sent from this device");
+        });
+      }).catch(err => {
+        syncing = false;
+        toast(err.message === "notfound" ? "That gist is gone — reconnect" : err.message);
+      });
+      return;
+    }
+
+    case "syncAuto": { SY.auto = !SY.auto; saveSync(); render(); return; }
+
+    case "syncOff": {
+      openSheet('<h2>Disconnect this device</h2>' +
+        '<p class="sh-sub">Removes the token from this device only. Your tasks stay here, ' +
+        'and the gist and your other devices are untouched.</p>' +
+        '<div class="btnrow"><button class="btn quiet" data-act="closeSheet">Cancel</button>' +
+        '<button class="btn warn" data-act="syncOffYes">Disconnect</button></div>');
+      return;
+    }
+    case "syncOffYes": {
+      SY.token = ""; SY.gistId = ""; SY.baseRev = 0; SY.dirty = false; SY.lastSync = "";
+      saveSync(); closeSheet(); render(); toast("Disconnected");
+      return;
+    }
+
+    case "syncKeepMine": {
+      closeSheet(); toast("Sending this device…");
+      SY.auto = true;
+      push({ force:true }).then(() => { render(); toast("This device is now the shared version"); })
+        .catch(e => toast(e.message));
+      return;
+    }
+    case "syncTakeTheirs": {
+      closeSheet(); toast("Pulling…");
+      SY.auto = true;
+      pull({ force:true }).then(() => { render(); toast("Replaced with the other device"); })
+        .catch(e => toast(e.message));
+      return;
+    }
+
     case "export": exportData(); return;
     case "copyJson": copyJson(); return;
     case "importFile": importFile(); return;
@@ -2078,8 +2356,17 @@ document.addEventListener("keydown", ev => {
 
 /* ============================ boot ============================ */
 load();
+loadSync();
 applyTheme();
 render();
+
+if (syncOn() && SY.auto){
+  pull().then(r => {
+    if (r.status === "conflict") conflictSheet(r.remote);
+    else if (r.status === "pulled"){ render(); toast("Updated from " + (r.from || "your other device")); }
+    else if (SY.dirty) scheduleSync();
+  }).catch(() => {});
+}
 
 try {
   const mq = window.matchMedia("(prefers-color-scheme: dark)");
