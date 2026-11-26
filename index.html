@@ -292,6 +292,9 @@ nav .pip{
 
 .empty{padding:17px 3px;color:var(--faint);font-size:13.5px}
 
+[data-swipe]{transition:transform .22s cubic-bezier(.32,.72,0,1), opacity .22s ease;will-change:transform}
+[data-swipe].swipe-go .t,[data-swipe].swipe-go .v{color:var(--danger)}
+
 .pick{
   flex:none;align-self:center;
   -webkit-appearance:none;appearance:none;
@@ -444,7 +447,7 @@ details.fold > summary .cnt{margin-left:auto;font-size:11.5px;color:var(--faint)
 
 /* ---------- overlays ---------- */
 .scrim{
-  position:fixed;inset:0;z-index:60;
+  position:fixed;inset:0;z-index:60;cursor:pointer;
   background:rgba(8,9,11,.42);
   -webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);
   opacity:0;pointer-events:none;transition:opacity .24s ease;
@@ -465,7 +468,20 @@ details.fold > summary .cnt{margin-left:auto;font-size:11.5px;color:var(--faint)
   transition:transform .34s cubic-bezier(.32,.72,0,1);
 }
 .sheet.on{transform:none}
-.grab{width:34px;height:4px;border-radius:2px;background:var(--faint);opacity:.35;margin:0 auto 15px}
+.grabwrap{
+  position:sticky;top:0;z-index:3;margin:-9px calc(var(--pad) * -1) 0;
+  padding:11px 0 9px;display:flex;align-items:center;justify-content:center;
+}
+.grab{width:36px;height:5px;border-radius:3px;background:var(--faint);opacity:.4}
+.sheetx{
+  position:absolute;right:var(--pad);top:7px;
+  width:29px;height:29px;border-radius:50%;
+  display:grid;place-items:center;color:var(--faint);
+  background:var(--glass-2);border:var(--hair) solid var(--stroke-2);
+}
+.sheetx svg{width:15px;height:15px}
+.sheetx:active{transform:scale(.9)}
+.sheet.drag{transition:none}
 .sheet h2{margin:0 0 5px;font-size:20px;font-weight:660;letter-spacing:-.028em}
 .sheet .sh-sub{font-size:13px;color:var(--faint);margin:0 0 15px;line-height:1.45;word-wrap:break-word;overflow-wrap:anywhere}
 .optrow{
@@ -592,7 +608,7 @@ const BUCKETS = [
 ];
 const BUCKET_LABEL = Object.fromEntries(BUCKETS.map(b => [b.id, b.label]));
 BUCKET_LABEL.inbox = "Inbox";
-BUCKET_LABEL.bin = "Bin";
+BUCKET_LABEL.bin = "Archive";
 
 const DD_THEMES = [
   "Fees and costs",
@@ -860,6 +876,7 @@ const U = {
   meetTab: "ic",
   tFilter: "all",
   tShow: 100,
+  aShow: 100,
   back: "today",
   scroll: {},
   tgQueue: [],
@@ -909,6 +926,22 @@ function moveItem(id, dir){
   S.items[b] = it;
   save();
   return true;
+}
+
+/* Keep today's list tidy: a ticked task drops to the end, and un-ticking
+   lifts it back above the finished ones rather than leaving it stranded. */
+function sinkSlot(it){
+  const slots = S.top3.slots;
+  const k = slots.findIndex(x => x && x.id === it.id);
+  if (k === -1) return;
+  const slot = slots.splice(k, 1)[0];
+  if (it.done){
+    slots.push(slot);
+  } else {
+    let at = slots.findIndex(x => { const o = slotItem(x); return o && o.done; });
+    if (at === -1) at = slots.length;
+    slots.splice(at, 0, slot);
+  }
 }
 
 function moveSlot(k, dir){
@@ -1003,7 +1036,8 @@ function viewToday(){
       ? '<button class="tick' + (isDone ? " on" : "") + '" data-act="toggle" data-id="' + it.id +
         '" aria-label="Mark done" style="width:22px;height:22px;margin:0">' + I.check + '</button>'
       : '<span class="n">' + (k+1) + '</span>';
-    h += '<div class="slot' + (k > 2 ? " extra" : "") + (isDone ? " struck" : "") + '">' +
+    h += '<div class="slot' + (k > 2 ? " extra" : "") + (isDone ? " struck" : "") + '"' +
+           (it ? ' data-swipe="' + it.id + '"' : '') + '>' +
            badge +
            '<button class="v' + (v ? "" : " ph") + '" data-act="top3" data-k="' + k + '"' +
              ' style="text-align:left;flex:1;min-width:0">' +
@@ -1090,7 +1124,7 @@ function itemRow(it){
   if (it.area === "personal") meta.push("Personal");
   if (it.bucket !== "week") meta.push(BUCKET_LABEL[it.bucket]);
   if (it.dupe) meta.push("Possible duplicate");
-  return '<div class="row' + (it.done ? " done" : "") + '">' +
+  return '<div class="row' + (it.done ? " done" : "") + '" data-swipe="' + it.id + '">' +
     '<button class="tick' + (it.done ? " on" : "") + '" data-act="toggle" data-id="' + it.id + '" aria-label="Mark done">' + I.check + '</button>' +
     '<button class="body" style="text-align:left" data-act="item" data-id="' + it.id + '">' +
       '<div class="t">' + esc(it.text) + '</div>' +
@@ -1349,8 +1383,8 @@ function triageRow(it){
   meta.push(it.area === "work" ? "Work" : it.area === "personal" ? "Personal" : "Note");
   if (it._grp) meta.push(it._n + " of " + it._grp + " similar");
   else if (it.dupe) meta.push("Possible duplicate");
-  const opts = [["","Sort"]].concat(BUCKETS.map(b => [b.id, b.label])).concat([["bin","Bin it"]]);
-  return '<div class="row' + (it._grp ? ' grp' : '') + (it._grp && it._n === 1 ? ' grp-top' : '') + '">' +
+  const opts = [["","Sort"]].concat(BUCKETS.map(b => [b.id, b.label])).concat([["bin","Archive"]]);
+  return '<div class="row' + (it._grp ? ' grp' : '') + (it._grp && it._n === 1 ? ' grp-top' : '') + '" data-swipe="' + it.id + '">' +
     '<button class="body" style="text-align:left" data-act="item" data-id="' + it.id + '">' +
       '<div class="t">' + esc(it.text) + '</div>' +
       '<div class="m">' + meta.map(esc).join(" &middot; ") + '</div>' +
@@ -1362,12 +1396,46 @@ function triageRow(it){
 }
 
 function noteRow(it){
-  return '<div class="row">' +
+  return '<div class="row" data-swipe="' + it.id + '">' +
     '<button class="body" style="text-align:left" data-act="item" data-id="' + it.id + '">' +
       '<div class="t">' + esc(it.text) + '</div>' +
     '</button>' +
     '<span class="chev">' + I.chev + '</span>' +
   '</div>';
+}
+
+/* ============================ render: Archive ============================ */
+function viewArchive(){
+  const list = S.items.filter(i => i.bucket === "bin");
+  setHead("Archive", list.length ? list.length + " kept" : "Empty",
+    '<button class="iconbtn" data-act="gotoset" aria-label="Back">' + I.x + '</button>');
+
+  if (!list.length){
+    return '<div class="card"><div class="empty">' +
+      'Nothing archived. Anything you swipe away or archive during triage is kept here ' +
+      'until you clear it out.</div></div>' +
+      '<div class="btnrow"><button class="btn full quiet" data-act="gotoset">Back to Settings</button></div>';
+  }
+
+  let h = '<p class="lead">Kept rather than deleted. Restore anything that turns out to matter, ' +
+          'or clear the lot once you are sure.</p>';
+  h += '<div class="card tight">' + list.slice(0, U.aShow).map(it =>
+    '<div class="row">' +
+      '<button class="body" style="text-align:left" data-act="unbin" data-id="' + it.id + '">' +
+        '<div class="t">' + esc(it.text) + '</div>' +
+        '<div class="m">' + esc(it.area === "work" ? "Work" : it.area === "personal" ? "Personal" : "Note") +
+        ' &middot; tap to restore</div>' +
+      '</button>' +
+      '<button class="iconbtn" data-act="unbin" data-id="' + it.id + '" aria-label="Restore">' + I.up + '</button>' +
+    '</div>').join("") + '</div>';
+
+  if (U.aShow < list.length){
+    h += '<div class="btnrow"><button class="btn full quiet" data-act="amore">Show ' +
+         Math.min(100, list.length - U.aShow) + ' more</button></div>';
+  }
+  h += '<div class="btnrow"><button class="btn full quiet warn" data-act="emptyBin">' + I.trash +
+       'Delete all ' + list.length + ' permanently</button></div>';
+  return h;
 }
 
 /* ============================ render: Meetings ============================ */
@@ -1559,12 +1627,12 @@ function viewSet(){
     '<div class="optrow">' + I.inbox + 'Inbox<span class="r">' + counts.inbox + '</span></div>' +
     '<div class="optrow">' + I.flow + 'Live items<span class="r">' + counts.live + '</span></div>' +
     '<div class="optrow">' + I.check + 'Done<span class="r">' + counts.done + '</span></div>' +
-    '<div class="optrow">' + I.trash + 'In the bin<span class="r">' + counts.bin + '</span></div>' +
+    '<button class="optrow" data-act="goarchive">' + I.trash + 'Archive<span class="r">' + counts.bin + ' &rsaquo;</span></button>' +
   '</div>';
 
   h += '<div class="sectitle">Clearing out</div><div class="card tight">' +
     '<button class="optrow" data-act="clearDone">' + I.check + 'Remove completed items</button>' +
-    '<button class="optrow warn" data-act="emptyBin">' + I.trash + 'Empty the bin</button>' +
+    '<button class="optrow" data-act="goarchive">' + I.trash + 'Open the archive</button>' +
     '<button class="optrow warn" data-act="wipe">' + I.x + 'Erase everything</button>' +
   '</div>';
 
@@ -1580,6 +1648,7 @@ function render(){
   if (U.tab === "today") h = viewToday();
   else if (U.tab === "flow") h = viewFlow();
   else if (U.tab === "triagepage") h = viewTriagePage();
+  else if (U.tab === "archive") h = viewArchive();
   else if (U.tab === "meet") h = viewMeet();
   else h = viewSet();
   main.innerHTML = h;
@@ -1598,13 +1667,21 @@ function go(tab){
 let sheetOpen = false;
 function openSheet(html){
   const sh = document.getElementById("sheet");
-  sh.innerHTML = '<div class="grab"></div>' + html;
+  sh.scrollTop = 0;
+  sh.style.transform = "";
+  sh.classList.remove("drag");
+  sh.innerHTML = '<div class="grabwrap"><span class="grab"></span>' +
+                 '<button class="sheetx" data-act="closeSheet" aria-label="Close">' + I.x + '</button>' +
+                 '</div>' + html;
   sh.classList.add("on");
   document.getElementById("scrim").classList.add("on");
   sheetOpen = true;
 }
 function closeSheet(){
-  document.getElementById("sheet").classList.remove("on");
+  const sh = document.getElementById("sheet");
+  sh.classList.remove("on");
+  sh.classList.remove("drag");
+  sh.style.transform = "";
   document.getElementById("scrim").classList.remove("on");
   sheetOpen = false;
 }
@@ -1629,8 +1706,11 @@ function promptSheet(opts){
 function itemSheet(id){
   const it = findItem(id);
   if (!it) return;
-  let h = '<h2>' + (it.area === "reflection" ? "Note" : "Item") + '</h2>' +
-          '<p class="sh-sub">' + esc(it.text) + '</p>';
+  const where = [
+    it.area === "work" ? "Work" : it.area === "personal" ? "Personal" : "Note",
+    BUCKET_LABEL[it.bucket] || ""
+  ].filter(Boolean).join(" \u00b7 ");
+  let h = '<h2>' + esc(it.text) + '</h2><p class="sh-sub">' + esc(where) + '</p>';
 
   if (it.area !== "reflection"){
     h += '<div style="font-size:12.5px;color:var(--faint);font-weight:600;margin:4px 0 2px">Move to</div>';
@@ -1659,7 +1739,7 @@ function itemSheet(id){
   if (it.area !== "reflection"){
     h += '<button class="optrow" data-act="toTop3" data-id="' + it.id + '">' + I.today + 'Do this today</button>';
   }
-  h += '<button class="optrow warn" data-act="binItem" data-id="' + it.id + '">' + I.trash + 'Move to the bin</button>';
+  h += '<button class="optrow warn" data-act="binItem" data-id="' + it.id + '">' + I.trash + 'Archive</button>';
   openSheet(h);
 }
 
@@ -1733,7 +1813,7 @@ function renderTriage(){
       '<button class="btn" data-act="tg" data-b="soon">Coming up</button>' +
       '<button class="btn" data-act="tg" data-b="waiting">Waiting on</button>' +
       '<button class="btn" data-act="tg" data-b="later">Later</button>' +
-      '<button class="btn quiet warn" data-act="tg" data-b="bin">Bin it</button>' +
+      '<button class="btn quiet warn" data-act="tg" data-b="bin">Archive</button>' +
       '<button class="btn quiet" data-act="tg" data-b="skip">Skip</button>' +
     '</div>';
 }
@@ -1814,6 +1894,75 @@ function listAt(path){
   return Array.isArray(o) ? o : null;
 }
 
+/* ============================ swipe to archive ============================
+   Horizontal drags only, and only once the gesture is clearly sideways, so
+   vertical scrolling is never hijacked. Past the threshold the row slides off
+   and the task is archived rather than destroyed. */
+const SWIPE_GO = 84;
+let swipe = null;
+
+function swipeTarget(el){ return el.closest("[data-swipe]"); }
+
+function archiveById(id, fromSlot){
+  const it = findItem(id);
+  if (!it) return false;
+  it.bucket = "bin";
+  it.updated = today();
+  const k = S.top3.slots.findIndex(x => x && x.id === id);
+  if (k > -1){
+    if (k > 2) S.top3.slots.splice(k, 1);
+    else S.top3.slots[k] = { id:"", text:"" };
+  }
+  save();
+  return true;
+}
+
+function bindSwipe(root){
+  root.addEventListener("touchstart", ev => {
+    if (ev.touches.length !== 1) { swipe = null; return; }
+    const el = swipeTarget(ev.target);
+    if (!el) return;
+    const t = ev.touches[0];
+    swipe = { el:el, id:el.dataset.swipe, x:t.clientX, y:t.clientY, dx:0, axis:null };
+  }, { passive:true });
+
+  root.addEventListener("touchmove", ev => {
+    if (!swipe) return;
+    const t = ev.touches[0];
+    const dx = t.clientX - swipe.x, dy = t.clientY - swipe.y;
+    if (swipe.axis === null){
+      if (Math.abs(dx) < 9 && Math.abs(dy) < 9) return;
+      swipe.axis = Math.abs(dx) > Math.abs(dy) * 1.4 ? "x" : "y";
+      if (swipe.axis === "x") swipe.el.style.transition = "none";
+    }
+    if (swipe.axis !== "x") return;
+    ev.preventDefault();
+    swipe.dx = Math.min(0, dx);
+    swipe.el.style.transform = "translateX(" + swipe.dx + "px)";
+    swipe.el.style.opacity = String(Math.max(.35, 1 + swipe.dx / 320));
+    swipe.el.classList.toggle("swipe-go", swipe.dx <= -SWIPE_GO);
+  }, { passive:false });
+
+  const finish = () => {
+    if (!swipe) return;
+    const s2 = swipe; swipe = null;
+    s2.el.style.transition = "";
+    s2.el.classList.remove("swipe-go");
+    if (s2.axis === "x" && s2.dx <= -SWIPE_GO){
+      s2.el.style.transform = "translateX(-100%)";
+      s2.el.style.opacity = "0";
+      setTimeout(() => {
+        if (archiveById(s2.id)){ render(); toast("Archived"); }
+      }, 150);
+    } else {
+      s2.el.style.transform = "";
+      s2.el.style.opacity = "";
+    }
+  };
+  root.addEventListener("touchend", finish, { passive:true });
+  root.addEventListener("touchcancel", finish, { passive:true });
+}
+
 /* ============================ events ============================ */
 document.addEventListener("click", ev => {
   const tabBtn = ev.target.closest("#tabs button[data-tab]");
@@ -1865,6 +2014,7 @@ document.addEventListener("click", ev => {
       it.done = !it.done;
       it.updated = today();
       it.doneAt = it.done ? today() : "";
+      sinkSlot(it);
       save(); render();
       return;
     }
@@ -1911,7 +2061,7 @@ document.addEventListener("click", ev => {
       if (!it) return;
       it.bucket = "bin"; it.updated = today();
       save(); closeSheet(); render();
-      toast("Moved to the bin");
+      toast("Archived");
       return;
     }
 
@@ -1933,17 +2083,18 @@ document.addEventListener("click", ev => {
       const already = todayIds();
       const cur = S.top3.slots[k];
       const pool = items("work","week").concat(items("personal","week"))
-        .filter(p => already.indexOf(p.id) === -1 || (cur && cur.id === p.id));
-      let h = '<h2>Doing today &middot; ' + (k+1) + '</h2>';
-      if (slotFilled(cur)) h += '<p class="sh-sub">' + esc(slotText(cur)) + '</p>';
+        .filter(p => already.indexOf(p.id) === -1);
+      let h = slotFilled(cur)
+        ? '<h2>' + esc(slotText(cur)) + '</h2><p class="sh-sub">Doing today &middot; ' + (k+1) + '</p>'
+        : '<h2>Doing today &middot; ' + (k+1) + '</h2>';
       if (slotFilled(cur) && S.top3.slots.length > 1){
         h += '<div style="font-size:12.5px;color:var(--faint);font-weight:600;margin:4px 0 2px">Order</div>';
         if (k > 0) h += '<button class="optrow" data-act="slotUp" data-k="' + k + '">' + I.mvUp + 'Move up</button>';
         if (k < S.top3.slots.length - 1) h += '<button class="optrow" data-act="slotDown" data-k="' + k + '">' + I.mvDown + 'Move down</button>';
       }
-      if (slotFilled(cur)) h += '<div style="font-size:12.5px;color:var(--faint);font-weight:600;margin:14px 0 2px">Swap for</div>';
       if (pool.length){
-        h += '<div style="font-size:12.5px;color:var(--faint);font-weight:600;margin:4px 0 2px">From This week</div>';
+        h += '<div style="font-size:12.5px;color:var(--faint);font-weight:600;margin:14px 0 2px">' +
+             (slotFilled(cur) ? 'Swap for' : 'From This week') + '</div>';
         h += pool.slice(0,12).map(p =>
           '<button class="optrow" data-act="top3pick" data-k="' + k + '" data-id="' + p.id + '">' +
           I.arrow + esc(p.text) + '</button>').join("");
@@ -2054,7 +2205,7 @@ document.addEventListener("click", ev => {
       const list = listAt(path);
       const e = list && list.find(x => x.id === id);
       if (!e) return;
-      let h = '<h2>Line</h2><p class="sh-sub">' + esc(e.text) + '</p>';
+      let h = '<h2>' + esc(e.text) + '</h2><p class="sh-sub">Meeting line</p>';
       h += '<button class="optrow" data-act="lineEdit" data-path="' + path + '" data-id="' + id + '">' + I.edit + 'Edit wording</button>';
       h += '<button class="optrow" data-act="lineToFlow" data-path="' + path + '" data-id="' + id + '">' + I.arrow + 'Send to Flow, This week</button>';
       h += '<button class="optrow warn" data-act="lineDel" data-path="' + path + '" data-id="' + id + '">' + I.trash + 'Delete</button>';
@@ -2148,7 +2299,7 @@ document.addEventListener("click", ev => {
     case "ddLine": {
       const d = S.dd.find(x => x.id === id);
       if (!d) return;
-      let h = '<h2>Cheat sheet line</h2><p class="sh-sub">' + esc(d.text) + '</p>';
+      let h = '<h2>' + esc(d.text) + '</h2><p class="sh-sub">' + esc(d.theme) + '</p>';
       h += '<button class="optrow" data-act="ddEdit" data-id="' + id + '">' + I.edit + 'Edit wording</button>';
       h += '<button class="optrow warn" data-act="ddDel" data-id="' + id + '">' + I.trash + 'Delete</button>';
       openSheet(h);
@@ -2293,6 +2444,17 @@ document.addEventListener("click", ev => {
     case "importFile": importFile(); return;
     case "importPaste": importPaste(); return;
 
+    case "goarchive": { U.aShow = 100; U.scroll.archive = 0; go("archive"); return; }
+    case "gotoset": go("set"); return;
+    case "amore": { U.aShow += 100; render(); return; }
+    case "unbin": {
+      const it = findItem(id);
+      if (!it) return;
+      it.bucket = "later"; it.updated = today();
+      save(); render(); toast("Restored to Later");
+      return;
+    }
+
     case "clearDone": {
       const before = S.items.length;
       S.items = S.items.filter(i => !i.done);
@@ -2301,9 +2463,20 @@ document.addEventListener("click", ev => {
       return;
     }
     case "emptyBin": {
+      const n = S.items.filter(i => i.bucket === "bin").length;
+      if (!n){ toast("Archive is already empty"); return; }
+      openSheet('<h2>Delete ' + n + ' permanently</h2>' +
+        '<p class="sh-sub">These leave the archive for good. This cannot be undone.</p>' +
+        '<div class="btnrow" style="margin-top:8px">' +
+          '<button class="btn quiet" data-act="closeSheet">Cancel</button>' +
+          '<button class="btn warn" data-act="emptyBinYes">Delete ' + n + '</button>' +
+        '</div>');
+      return;
+    }
+    case "emptyBinYes": {
       const before = S.items.length;
       S.items = S.items.filter(i => i.bucket !== "bin");
-      save(); render();
+      save(); closeSheet(); render();
       toast((before - S.items.length) + " deleted");
       return;
     }
@@ -2333,6 +2506,7 @@ document.addEventListener("click", ev => {
 });
 
 document.getElementById("scrim").addEventListener("click", closeSheet);
+bindSwipe(document.getElementById("view"));
 
 document.addEventListener("change", ev => {
   const pick = ev.target.closest("[data-pick]");
@@ -2343,7 +2517,7 @@ document.addEventListener("change", ev => {
       it.bucket = (it.area === "reflection" && v !== "bin") ? "later" : v;
       it.updated = today();
       save(); render();
-      toast(v === "bin" ? "Binned" : "Moved to " + BUCKET_LABEL[v]);
+      toast(v === "bin" ? "Archived" : "Moved to " + BUCKET_LABEL[v]);
     }
     return;
   }
